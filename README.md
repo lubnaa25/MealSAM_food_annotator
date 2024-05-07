@@ -1,6 +1,9 @@
-![vit-L_automatic](https://github.com/lubnaa25/MealSAM_food_annotator/assets/38241109/21bbdeab-87dd-478a-87ae-664964660aa6)# MealSAM_food_annotator
+# MealSAM_food_annotator
 A semi-automatic segmentation tool for meal image segmentation using SAM in python=3.9 
+![Inputs & Outputs](/images/paperdigest_seg.png "Inputs & Outputs")
 
+## MealSAM (ViT-B) vs. Pre-trained SAM models
+![IoU](/images/heatmap.png "IoU")
 
 
 ## Installation
@@ -41,10 +44,10 @@ From the repository, start the tool using Python.
 #### i.	Uploading an Image for segmentation
 Note: Images are automatically resized. Upon saving, both the resized images and their corresponding validated masks of the same shape will be saved.
 
-![Image Upload](/images/img1.png "Image Upload")
+
 
 #### ii.	Visualizing Automatic Masks
-Click on the "Segment" button to view all masks generated automatically. (This is only for visualization purposes; we are interested only in the semi-automatic segmentation and annotation of different food items or food containers present in the image). As you can see you have the option of changing the model used; base, large, huge.
+Click on the "Segment" button to view all masks generated automatically - this is possible only with the pre-trained models. (This is only for visualization purposes; we are interested only in the semi-automatic segmentation and annotation of different food items or food containers present in the image). As you can see you have the option of changing the model used; mealSAM, base, large, huge.
 
 E.g., ViT B
 
