@@ -41,7 +41,7 @@ From the repository, start the tool using Python.
 #### i.	Uploading an Image for segmentation
 Note: Images are automatically resized. Upon saving, both the resized images and their corresponding validated masks of the same shape will be saved.
 
-![Image Upload](/images/img1.png "Image Upload")
+
 
 #### ii.	Visualizing Automatic Masks
 Click on the "Segment" button to view all masks generated automatically. (This is only for visualization purposes; we are interested only in the semi-automatic segmentation and annotation of different food items or food containers present in the image). As you can see you have the option of changing the model used; base, large, huge.
