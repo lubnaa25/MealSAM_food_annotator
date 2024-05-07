@@ -1,5 +1,6 @@
 # MealSAM_food_annotator
 A semi-automatic segmentation tool for meal image segmentation using SAM in python=3.9 
+![Inputs & Outputs](/images/paperdigest_seg.png "Inputs & Outputs")
 
 
 
