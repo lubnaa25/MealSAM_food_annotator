@@ -11,7 +11,8 @@ A semi-automatic segmentation tool for meal image segmentation using SAM in pyth
 Follow these steps to set up the Annotation Tool environment:
 
 ### Step 0: Clone repository 
-
+  git clone https://github.com/lubnaa25/MealSAM_food_annotator.git
+  cd MealSAM_food_annotator
   
 
 ### Step 1: Create Conda Environment
@@ -26,7 +27,7 @@ Follow these steps to set up the Annotation Tool environment:
 ### Step 2: Activate Conda Environment
 
 After creating the environment, you need to activate it. Run the following command:
- conda activate MealSAM
+     conda activate MealSAM
 
 ### Step 3:  Install Required Packages
      
