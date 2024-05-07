@@ -12,11 +12,12 @@ Follow these steps to set up the Annotation Tool environment:
 
 ### Step 0: Clone repository 
 
-   
+
+```ruby
      git clone https://github.com/lubnaa25/MealSAM_food_annotator.git
    
      cd MealSAM_food_annotator
-  
+```  
 
 ### Step 1: Create Conda Environment
 
@@ -24,26 +25,32 @@ Follow these steps to set up the Annotation Tool environment:
 
 2. Create a new conda environment specifically for the Segmentation Tool V2 to manage dependencies efficiently by running the following command:
 
-  
-      conda create -n MealSAM python=3.9
+```ruby
+   conda create -n MealSAM python=3.9
+```
 
 ### Step 2: Activate Conda Environment
 
 After creating the environment, you need to activate it. Run the following command:
      
+```ruby
      conda activate MealSAM
+```
 
 ### Step 3:  Install Required Packages
      
+```ruby
      pip install -r requirements.txt
-
+```
 
 ## Using the Tool
 
 ### Step 1: Launching tool
 From the repository, start the tool using Python.
 
+```ruby
     python ./MealSAM_food_annotator.py
+```
 
 ### Step 2: Uploading Image
 #### i.	Uploading an Image for segmentation
