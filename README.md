@@ -1,4 +1,4 @@
-![vit-L_automatic](https://github.com/lubnaa25/MealSAM_food_annotator/assets/38241109/21bbdeab-87dd-478a-87ae-664964660aa6)# MealSAM_food_annotator
+# MealSAM_food_annotator
 A semi-automatic segmentation tool for meal image segmentation using SAM in python=3.9 
 
 
