@@ -104,7 +104,7 @@ class ImageEditorApp:
        
         
         self.root.title("Food Annotator")
-        icon = ImageTk.PhotoImage(file="AppIcon.png")  
+        icon = ImageTk.PhotoImage(file="./tool_resources/appicon.png")  
         self.root.iconphoto(False, icon)
        
         menubar = Menu(self.root)
@@ -121,8 +121,8 @@ class ImageEditorApp:
         file_menu.add_command(label="Exit", command=root.quit)
         
      
-        upload_image_icon = ImageTk.PhotoImage(Image.open("upload.png").resize((20, 20)))
-        save_image_icon = ImageTk.PhotoImage(Image.open("save.png").resize((20, 20)))
+        upload_image_icon = ImageTk.PhotoImage(Image.open("./tool_resources/upload.png").resize((20, 20)))
+        save_image_icon = ImageTk.PhotoImage(Image.open("./tool_resources/save.png").resize((20, 20)))
         
         ### Buttons
         button_frame = tk.Frame(self.root)
@@ -172,7 +172,7 @@ class ImageEditorApp:
                      
         #food cat/labels to assign per specific segment       
         self.category_variable = tk.StringVar(root)
-        self.load_categories_from_json("categories.json")
+        self.load_categories_from_json("./tool_resources/categories.json")
         self.category_dropdown_label = tk.Label(button_frame, text="Select Segment Category:")
         self.category_dropdown_label.pack(side="left", padx=5)
         self.category_dropdown = self.category_dropdown = AutocompleteCombobox(button_frame, self.categories, self, textvariable=self.category_variable)#AutocompleteCombobox(button_frame, self.categories, textvariable=self.category_variable)
@@ -348,7 +348,7 @@ class ImageEditorApp:
     def update_categories_json(self):
         # 
         try:
-            with open("categories.json", "w") as file:
+            with open("./tool_resources/categories.json", "w") as file:
                 json.dump(self.categories, file)
         except Exception as e:
             tk.messagebox.showerror("Error", f"Failed to update categories: {e}")
@@ -451,7 +451,7 @@ class ImageEditorApp:
         
         if self.image_path:
             if hasattr(self, "val_copy"):
-                print('has val copy')
+                
                 validated_mask_image = self.val_copy
                 val_filename = f"{original_filename}_validated_mask.png"
                 val_path = os.path.join(self.image_directory, val_filename)
@@ -475,10 +475,10 @@ class ImageEditorApp:
                 
                 tk.messagebox.showinfo("Success", "Image, validated mask, and weight information saved successfully!")
             else:
-                print('hasnt val copy')
+                
                 tk.messagebox.showerror("Error", "Nothing available to be saved. Both Image and Validated mask must be present")
         else:
-            print('no img path')
+           
             tk.messagebox.showerror("Error", "Nothing available to be saved. Both Image and Validated mask must be present")
 
     def create_mask(self):
