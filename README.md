@@ -26,7 +26,7 @@ Follow these steps to set up the Annotation Tool environment:
 ### Step 2: Activate Conda Environment
 
 After creating the environment, you need to activate it. Run the following command:
- conda activate SAM_Annotation_TOOL
+ conda activate MealSAM
 
 ### Step 3:  Install Required Packages
      
