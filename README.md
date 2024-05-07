@@ -38,7 +38,7 @@ After creating the environment, you need to activate it. Run the following comma
 ### Step 1: Launching tool
 From the repository, start the tool using Python.
 
-  python ./MealSAM_food_annotator.py
+    python ./MealSAM_food_annotator.py
 
 ### Step 2: Uploading Image
 #### i.	Uploading an Image for segmentation
