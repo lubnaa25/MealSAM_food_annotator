@@ -1,10 +1,15 @@
 # MealSAM_food_annotator
 A semi-automatic segmentation tool for meal image segmentation using SAM in python=3.9.15
-![Inputs & Outputs](/images/paperdigest_seg.png "Inputs & Outputs")
 
+<!---![Inputs & Outputs](/images/paperdigest_seg.png "Inputs & Outputs")--->
+<p align="center">
+<img src="/images/paperdigest_seg.png" width=50% height=50%>
+</p>
 ## MealSAM (ViT-B) vs. Pre-trained SAM models
-![IoU](/images/heatmap.png "IoU")
-
+<!---![IoU](/images/heatmap.png "IoU")--->
+<p align="center">
+<img src="/images/heatmap.png" width=50% height=50%>
+</p>
 
 ## Installation
 
