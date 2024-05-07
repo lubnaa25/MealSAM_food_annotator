@@ -304,7 +304,7 @@ class ImageEditorApp:
         
     def determine_checkpoint_path(self, model_type):
         if model_type == "MealSAM":
-            return "./weights/weights_only_model.pth"
+            return "./weights/MealSAM.pth"
           
         elif model_type == "vit_b":
             return "./weights/sam_vit_b_01ec64.pth"
