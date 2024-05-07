@@ -13,8 +13,9 @@ Follow these steps to set up the Annotation Tool environment:
 ### Step 0: Clone repository 
 
    
-   git clone https://github.com/lubnaa25/MealSAM_food_annotator.git
-   cd MealSAM_food_annotator
+     git clone https://github.com/lubnaa25/MealSAM_food_annotator.git
+   
+     cd MealSAM_food_annotator
   
 
 ### Step 1: Create Conda Environment
@@ -23,8 +24,8 @@ Follow these steps to set up the Annotation Tool environment:
 
 2. Create a new conda environment specifically for the Segmentation Tool V2 to manage dependencies efficiently by running the following command:
 
-   ```bash
-   conda create -n MealSAM python=3.9
+  
+      conda create -n MealSAM python=3.9
 
 ### Step 2: Activate Conda Environment
 
