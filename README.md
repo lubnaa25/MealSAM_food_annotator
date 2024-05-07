@@ -44,7 +44,7 @@ Note: Images are automatically resized. Upon saving, both the resized images and
 
 
 #### ii.	Visualizing Automatic Masks
-Click on the "Segment" button to view all masks generated automatically. (This is only for visualization purposes; we are interested only in the semi-automatic segmentation and annotation of different food items or food containers present in the image). As you can see you have the option of changing the model used; base, large, huge.
+Click on the "Segment" button to view all masks generated automatically - this is possible only with the pre-trained models. (This is only for visualization purposes; we are interested only in the semi-automatic segmentation and annotation of different food items or food containers present in the image). As you can see you have the option of changing the model used; mealSAM, base, large, huge.
 
 E.g., ViT B
 
