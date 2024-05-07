@@ -5,6 +5,8 @@ A semi-automatic segmentation tool for meal image segmentation using SAM in pyth
 <p align="center">
 <img src="/images/paperdigest_seg.png" width=50% height=50%>
 </p>
+
+
 ## MealSAM (ViT-B) vs. Pre-trained SAM models
 <!---![IoU](/images/heatmap.png "IoU")--->
 <p align="center">
