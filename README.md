@@ -1,7 +1,6 @@
 # MealSAM_food_annotator
+[![Apache 2.0 License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0.txt)
 
-[![Apache 2.0 License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)]([LICENSE](https://www.apache.org/licenses/LICENSE-2.0.txt))
-[![Code of Conduct](https://img.shields.io/badge/Code%20of%20Conduct-Contributor%20Covenant%202.0-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
 A SAM-based Tool for Semi-Automatic Food Annotation - A demo
 This page features the code for the semi-automatic segmentation tool submitted for demo presentation awaiting acceptance.
