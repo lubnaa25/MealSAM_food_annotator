@@ -268,7 +268,7 @@ class ImageEditorApp:
         self.mask_generator = update_sam_model(self.model_variable.get(), self.determine_checkpoint_path(self.model_variable.get()))
         
        
-        
+          
         
         #Clears the include and exclude points 
         self.clear_button = tk.Button(button_frame, text="Clear", command=self.clear_points)
