@@ -108,3 +108,17 @@ As you can see below, here you can input either the weight/volume if you know th
 Once satisfied with the segmentation, click "Save."
 The final output will be the validated mask. Upon saving, both the resized RGB image and the validated mask (saved as a 16-bit image) are stored.
 
+
+
+## Citation
+
+If you find either MealSAM or this tool useful, please consider citing it using the following BibTeX entry:
+
+```bibtex
+@software{abdurrahman2024mealsamfoodannotator,
+  author = {Lubnaa Abdur Rahman, Ioannis Papathanail, Lorenzo Brigato, Stavroula Mougiakakou},
+  title = {{A SAM-based Tool for Semi-Automatic Food Annotation}},
+  url = {https://github.com/lubnaa25/MealSAM_food_annotator},
+  version = {1.0.0},
+  year = {2024}
+}
