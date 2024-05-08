@@ -1,5 +1,10 @@
 # MealSAM_food_annotator
-A semi-automatic segmentation tool for meal image segmentation using SAM in python=3.9.15
+[![Apache 2.0 License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0.txt)
+
+
+A SAM-based Tool for Semi-Automatic Food Annotation - A demo
+This page features the code for the semi-automatic segmentation tool submitted for demo presentation awaiting acceptance.
+The tool is designed for meal image segmentation leveraging [SAM]([https://example.com](https://github.com/facebookresearch/segment-anything)) featuring pre-trained versions of SAM along with a fine-tuned version of SAM's mask decoder, dubbed MealSAM, with the ViT-B backbone tailored specifically for food image segmentation.
 
 <!---![Inputs & Outputs](/images/paperdigest_seg.png "Inputs & Outputs")--->
 <p align="center">
