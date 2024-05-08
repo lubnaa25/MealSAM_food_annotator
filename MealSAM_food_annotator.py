@@ -2,10 +2,23 @@
 """
 Created on Mon Feb  5 14:16:30 2024
 
-@author: lubna
-"""
+@author: Lubnaa Abdur Rahman
 
-###  Apache License: Version 2.0, January 2004
+
+Copyright [2024] [Lubnaa Abdur Rahman, Ioannis Papathanail, Lorenzo Brigato, Stavroula Mougiakakou]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
 
 import os
 import tkinter as tk
@@ -276,7 +289,7 @@ class ImageEditorApp:
         self.load_categories_from_json("./tool_resources/categories.json")
         self.category_dropdown_label = tk.Label(button_frame, text="Select Segment Category:")
         self.category_dropdown_label.pack(side="left", padx=5)
-        self.category_dropdown = self.category_dropdown = AutocompleteCombobox(button_frame, self.categories, self, textvariable=self.category_variable)#problem here
+        self.category_dropdown = self.category_dropdown = AutocompleteCombobox(button_frame, self.categories, self, textvariable=self.category_variable)
         self.category_dropdown.pack(side="left", padx=5)
         style = ttk.Style(self.root)
         style.theme_use("alt")  
