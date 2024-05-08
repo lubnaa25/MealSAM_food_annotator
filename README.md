@@ -109,6 +109,9 @@ Once satisfied with the segmentation, click "Save."
 The final output will be the validated mask. Upon saving, both the resized RGB image and the validated mask (saved as a 16-bit image) are stored.
 
 
+## Coming soon 
+In the future, we also anticipate the release of larger versions of MealSAM.
+
 
 ## Citation
 
