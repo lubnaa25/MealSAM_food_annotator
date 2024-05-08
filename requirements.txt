@@ -1,6 +1,6 @@
-numpy==1.25.1
-opencv_contrib_python==4.6.0.66
-opencv_python_headless==4.6.0.66
+numpy==1.19.5
+opencv_python_headless==4.8.1.78
 Pillow==10.3.0
 segment_anything==1.0
-torch==2.0.1+cu118
+torch==2.3.0
+torchvision==0.18.0
