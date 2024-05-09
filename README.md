@@ -4,7 +4,7 @@
 
 A SAM-based Tool for Semi-Automatic Food Annotation.
 
-This page features the code for the semi-automatic segmentation tool submitted for demo presentation awaiting acceptance.
+This page features the code for the semi-automatic segmentation tool submitted for demo presentation pending acceptance.
 The tool is designed for meal image segmentation leveraging [SAM](https://github.com/facebookresearch/segment-anything) featuring pre-trained versions of SAM along with a fine-tuned version of SAM's mask decoder, dubbed MealSAM, with the ViT-B backbone tailored specifically for food image segmentation.
 
 <!---![Inputs & Outputs](/images/paperdigest_seg.png "Inputs & Outputs")--->
