@@ -29,7 +29,7 @@ import cv2
 import numpy as np
 import torch
 import json
-#os.chdir('./MealSAM_food_annotator/') ##Replace absolute path
+
 
 from segment_anything import SamAutomaticMaskGenerator, SamPredictor
 
