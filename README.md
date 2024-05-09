@@ -28,7 +28,7 @@ The tool is designed for meal image segmentation leveraging [SAM](https://github
      MealSAM
      ├── images
      ├── tool_resources
-     │   └── appicon.json
+     │   └── appicon.png
      │   └── categories.json  -- can be changed to your categories
      │   └── save.png
      │   └── upload.png
