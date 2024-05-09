@@ -52,7 +52,7 @@ After creating the environment, you need to activate it. Run the following comma
 ### Step 3:  Install Required Packages
      
 ```ruby
-     pip install -r requirements.txt
+     pip install -r requirements_cuda.txt (or requirements.txt for non GPU)
 ```
 
 ## Using the Tool
