@@ -454,7 +454,7 @@ class ImageEditorApp:
         new_category_name = tk.simpledialog.askstring("New Category", "Enter new category name:")
         if new_category_name and new_category_name.strip() and new_category_name not in self.categories:
             self.categories.append(new_category_name)
-            self.categories.sort()  # .
+           # self.categories.sort()  # .
             self.category_dropdown["values"] = self.categories + ["Add new category..."]
             self.update_categories_json()  # Update the JSON file with the new category.
             self.category_variable.set(new_category_name)  # Set the newly added category as the selected value.
