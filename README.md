@@ -121,7 +121,7 @@ Perform semi-automatic segmentation by interacting with the image:
 •	Right-click on pixels to exclude them (up to 10 points).
 Click on the "Semi Segment" button to generate a semi-automatic mask. This produces a mono mask (only one mask is generated).
 
-![Semi-auto](/images/annotatedexampleMealSAM.png "Semi Auto")
+![Semi-auto](/images/AnnotatedExampleMealSAM.png "Semi Auto")
 
 
 #### iv.	Validating the Mask
