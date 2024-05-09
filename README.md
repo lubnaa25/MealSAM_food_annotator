@@ -5,7 +5,7 @@
 A SAM-based Tool for Semi-Automatic Food Annotation.
 
 This page features the code for the semi-automatic segmentation tool submitted for demo presentation awaiting acceptance.
-The tool is designed for meal image segmentation leveraging [SAM]([https://example.com](https://github.com/facebookresearch/segment-anything)) featuring pre-trained versions of SAM along with a fine-tuned version of SAM's mask decoder, dubbed MealSAM, with the ViT-B backbone tailored specifically for food image segmentation.
+The tool is designed for meal image segmentation leveraging [SAM](https://github.com/facebookresearch/segment-anything) featuring pre-trained versions of SAM along with a fine-tuned version of SAM's mask decoder, dubbed MealSAM, with the ViT-B backbone tailored specifically for food image segmentation.
 
 <!---![Inputs & Outputs](/images/paperdigest_seg.png "Inputs & Outputs")--->
 <p align="center">
@@ -56,6 +56,11 @@ After creating the environment, you need to activate it. Run the following comma
      pip install -r requirements_cuda.txt (or requirements.txt for non GPU)
 ```
 
+### Step 4: Download the weights
+Pre-trained SAM weights can be downloaded from [official SAM repo](https://github.com/facebookresearch/segment-anything)
+
+MealSAM weight can be downloaded [here](https://www.dropbox.com/scl/fi/o41lkdu7wacyosurmr7dk/MealSAM.pth?rlkey=fe2df1k4hic80uztk54zd7u7q&st=db5r1c99&dl=0)
+
 ## Using the Tool
 
 ### Step 1: Launching tool
@@ -74,12 +79,12 @@ Note: Images are automatically resized. Upon saving, both the resized images and
 #### ii.	Visualizing Automatic Masks
 Click on the "Segment" button to view all masks generated automatically - this is possible only with the pre-trained models. (This is only for visualization purposes; we are interested only in the semi-automatic segmentation and annotation of different food items or food containers present in the image). As you can see you have the option of changing the model used; mealSAM, base, large, huge.
 
-E.g., ViT B
+E.g., ViT-B
 
 ![ViT-B](/images/vit-B_automatic.png "ViT-B")
 
 
-E.g., ViT L
+E.g., ViT-L
 
 ![ViT-H](/images/vit-L_automatic.png "ViT-L")
 
@@ -113,6 +118,14 @@ The final output will be the validated mask. Upon saving, both the resized RGB i
 ## Coming soon 
 In the future, we also anticipate the release of larger versions of MealSAM.
 
+
+## Beyond Food Image annotation
+The tool can be extented for your own use case since we also include the pre-trained versions of SAM. You can also replace MealSAM by your fine-tuned version of SAM within the tool and switch the categories.json file to your list of categories.
+Lines of code in MealSAM_food_annotator.py to be changed:
+```ruby
+     MealSAM weight:   lines 207, 421, 435 
+     Categories:       lines 289, 465
+```
 
 ## Citation
 
