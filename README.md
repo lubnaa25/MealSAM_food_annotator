@@ -56,7 +56,9 @@ After creating the environment, you need to activate it. Run the following comma
      pip install -r requirements_cuda.txt (or requirements.txt for non GPU)
 ```
 
-### Step 4: Download the weights
+### Step 4: Download the weights 
+Put the weights in the ./weights folder
+
 Pre-trained SAM weights can be downloaded from [official SAM repo](https://github.com/facebookresearch/segment-anything)
 
 MealSAM weight can be downloaded [here](https://www.dropbox.com/scl/fi/o41lkdu7wacyosurmr7dk/MealSAM.pth?rlkey=fe2df1k4hic80uztk54zd7u7q&st=db5r1c99&dl=0)
