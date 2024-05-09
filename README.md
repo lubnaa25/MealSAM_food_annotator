@@ -60,7 +60,7 @@ Follow these steps to set up the Annotation Tool environment:
 
 1. Open your terminal or command prompt.
 
-2. Create a new conda environment specifically for the Segmentation Tool V2 to manage dependencies efficiently by running the following command:
+2. Create a new conda environment:
 
 ```ruby
    conda create -n MealSAM python=3.9
