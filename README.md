@@ -19,6 +19,26 @@ The tool is designed for meal image segmentation leveraging [SAM](https://github
 <img src="/images/heatmap.png" width=50% height=50%>
 </p>
 
+## Structure
+```bash
+     MealSAM
+     ├── images
+     ├── tool_resources
+     │   └── appicon.json
+     │   └── categories.json  -- can be changed to your categories
+     │   └── save.png
+     │   └── upload.png
+     ├── weights
+     │   ├── MealSAM.pth -- can be changed to your model checkpoint
+     │   └── sam_vit_b_01ec64.pth
+     │   └── sam_vit_l_0b3195.pth
+     │   └── sam_vit_h_4b8939.pth
+     ├── MealSAM_food_annotator.py
+     ├── README.md
+     ├── requirements.txt
+     └── requirements_cuda.txt
+```
+
 ## Installation
 
 Follow these steps to set up the Annotation Tool environment:
@@ -56,12 +76,12 @@ After creating the environment, you need to activate it. Run the following comma
      pip install -r requirements_cuda.txt (or requirements.txt for non GPU)
 ```
 
-### Step 4: Download the weights 
-Put the weights in the ./weights folder
+### Step 4: Download the checkpoints 
+Put the checkpoints in the ./weights folder
 
-Pre-trained SAM weights can be downloaded from [official SAM repo](https://github.com/facebookresearch/segment-anything)
+Pre-trained SAM can be downloaded from [official SAM repo](https://github.com/facebookresearch/segment-anything)
 
-MealSAM weight can be downloaded [here](https://www.dropbox.com/scl/fi/o41lkdu7wacyosurmr7dk/MealSAM.pth?rlkey=fe2df1k4hic80uztk54zd7u7q&st=db5r1c99&dl=0)
+MealSAM can be downloaded [here](https://www.dropbox.com/scl/fi/o41lkdu7wacyosurmr7dk/MealSAM.pth?rlkey=fe2df1k4hic80uztk54zd7u7q&st=db5r1c99&dl=0)
 
 ## Using the Tool
 
@@ -118,7 +138,7 @@ The final output will be the validated mask. Upon saving, both the resized RGB i
 
 
 ## Coming soon 
-In the future, we also anticipate the release of larger versions of MealSAM.
+In the future, we anticipate support of bounding boxes as prompts in the tool and also the release of larger versions of MealSAM.
 
 
 ## Beyond Food Image annotation
