@@ -163,5 +163,5 @@ If you find either MealSAM or this tool useful, please consider citing it using 
   title = {{A SAM-based Tool for Semi-Automatic Food Annotation}},
   url = {https://github.com/lubnaa25/MealSAM_food_annotator},
   version = {1.0.0},
-  year = {2024}
+  date = {09-05-2024}
 }
