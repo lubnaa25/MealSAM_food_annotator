@@ -1,8 +1,12 @@
 # MealSAM_food_annotator
-[![Apache 2.0 License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0.txt)
+## License
+
+Copyright © 2024 University of Bern, ARTORG Center for Biomedical Engineering Research, [Lubnaa Abdur Rahman, Ioannis Papathanail, Lorenzo Brigato, Stavroula Mougiakakou]
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at [![Apache 2.0 License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0.txt)
 
 
-A SAM-based Tool for Semi-Automatic Food Annotation.
+## A SAM-based Tool for Semi-Automatic Food Annotation.
 
 This page features the code for the semi-automatic segmentation tool submitted for demo presentation pending acceptance.
 The tool is designed for meal image segmentation leveraging [SAM](https://github.com/facebookresearch/segment-anything) featuring pre-trained versions of SAM along with a fine-tuned version of SAM's mask decoder, dubbed MealSAM, with the ViT-B backbone tailored specifically for food image segmentation.
