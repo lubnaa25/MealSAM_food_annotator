@@ -1,8 +1,12 @@
 # MealSAM_food_annotator
-[![Apache 2.0 License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0.txt)
+## License
+
+Copyright © 2024 University of Bern, ARTORG Center for Biomedical Engineering Research, Authors: Lubnaa Abdur Rahman, Ioannis Papathanail, Lorenzo Brigato, Stavroula Mougiakakou
+
+The tool and MealSAM is licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at [![Apache 2.0 License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0.txt)
 
 
-A SAM-based Tool for Semi-Automatic Food Annotation.
+## A SAM-based Tool for Semi-Automatic Food Annotation.
 
 This page features the code for the semi-automatic segmentation tool submitted for demo presentation pending acceptance.
 The tool is designed for meal image segmentation leveraging [SAM](https://github.com/facebookresearch/segment-anything) featuring pre-trained versions of SAM along with a fine-tuned version of SAM's mask decoder, dubbed MealSAM, with the ViT-B backbone tailored specifically for food image segmentation.
@@ -24,7 +28,7 @@ The tool is designed for meal image segmentation leveraging [SAM](https://github
      MealSAM
      ├── images
      ├── tool_resources
-     │   └── appicon.json
+     │   └── appicon.png
      │   └── categories.json  -- can be changed to your categories
      │   └── save.png
      │   └── upload.png
@@ -56,7 +60,7 @@ Follow these steps to set up the Annotation Tool environment:
 
 1. Open your terminal or command prompt.
 
-2. Create a new conda environment specifically for the Segmentation Tool V2 to manage dependencies efficiently by running the following command:
+2. Create a new conda environment:
 
 ```ruby
    conda create -n MealSAM python=3.9
@@ -117,7 +121,7 @@ Perform semi-automatic segmentation by interacting with the image:
 •	Right-click on pixels to exclude them (up to 10 points).
 Click on the "Semi Segment" button to generate a semi-automatic mask. This produces a mono mask (only one mask is generated).
 
-![Semi-auto](/images/annotatedexampleMealSAM.png "Semi Auto")
+![Semi-auto](/images/AnnotatedExampleMealSAM.png "Semi Auto")
 
 
 #### iv.	Validating the Mask
@@ -159,5 +163,5 @@ If you find either MealSAM or this tool useful, please consider citing it using 
   title = {{A SAM-based Tool for Semi-Automatic Food Annotation}},
   url = {https://github.com/lubnaa25/MealSAM_food_annotator},
   version = {1.0.0},
-  year = {2024}
+  date = {09-05-2024}
 }
