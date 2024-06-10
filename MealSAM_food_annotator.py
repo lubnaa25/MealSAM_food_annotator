@@ -5,7 +5,7 @@ Created on Mon Feb  5 14:16:30 2024
 @author: Lubnaa Abdur Rahman
 
 
-Copyright ©  2024 University of Bern, ARTORG Center, [Lubnaa Abdur Rahman, Ioannis Papathanail, Lorenzo Brigato, Stavroula Mougiakakou]
+Copyright ©  2024 University of Bern, ARTORG Center for Biomedical Engineering Research, [Lubnaa Abdur Rahman, Ioannis Papathanail, Lorenzo Brigato, Stavroula Mougiakakou]
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
