@@ -317,7 +317,7 @@ class ImageEditorApp:
         return brush_image
 
     def draw_brush(self, event):
-        if self.brush_active.get() == 1:  # Brush is active
+        if self.brush_active.get() == 1:  
             x, y = event.x, event.y
             size = self.brush_size_slider.get()
             action = self.brush_action.get()
@@ -331,9 +331,9 @@ class ImageEditorApp:
             if self.brush_id:
                 self.overlaid_mask_canvas.delete(self.brush_id)
             self.brush_id = self.overlaid_mask_canvas.create_image(x, y, image=self.tk_brush_image, anchor="center")
-            self.overlaid_mask_canvas.lift(self.brush_id)  # Ensure brush is on top
+            self.overlaid_mask_canvas.lift(self.brush_id)  
     
-            # Update the mask directly if the user is actively painting
+          
             if self.paint_active:
                 self.paint(event)
 
@@ -348,12 +348,12 @@ class ImageEditorApp:
         if 0 <= x < self.merged_mask.shape[1] and 0 <= y < self.merged_mask.shape[0]:
             self.current_label = self.merged_mask[y, x]
             if self.current_label == 0 and self.brush_action.get() == 'Add':
-                # Create a new label if adding on background
+               
                 self.max_label += 1
                 self.current_label = self.max_label
                 self.colors.append(np.random.randint(0, 256, 3).tolist())
         else:
-            self.current_label = 1  # Default label
+            self.current_label = 1  
         self.paint(event)
 
     def stop_paint(self, event):
@@ -367,7 +367,7 @@ class ImageEditorApp:
         if action == 'Add':
             new_label = self.current_label
             if new_label == 0:
-                # If clicking on background, create a new label
+               
                 self.max_label += 1
                 new_label = self.max_label
                 self.colors.append(np.random.randint(0, 256, 3).tolist())
@@ -377,14 +377,14 @@ class ImageEditorApp:
 
         for i in range(-size, size):
             for j in range(-size, size):
-                if i**2 + j**2 <= size**2:  # Ensures the points are within a circle
+                if i**2 + j**2 <= size**2:  
                     x_i = x + i
                     y_j = y + j
                     if 0 <= x_i < self.merged_mask.shape[1] and 0 <= y_j < self.merged_mask.shape[0]:
                         self.merged_mask[y_j, x_i] = new_label
 
     def update_model_mask_on_canvas(self):
-        # Create a color mask using the updated merged_mask
+        
         color_mask = self.colorize_mask(self.merged_mask)
         mask_image = Image.fromarray(color_mask)
         self.tk_model_mask_image = ImageTk.PhotoImage(mask_image)
@@ -393,10 +393,10 @@ class ImageEditorApp:
         self.mask_canvas.image = self.tk_model_mask_image
 
     def update_overlaid_mask_on_canvas(self):
-        # Create a color mask using the updated merged_mask
+       
         color_mask = self.colorize_mask(self.merged_mask)
         
-        # Blend the original image with the updated color mask
+       
         overlaid_image_array = np.array(self.image.convert("RGB"))
         alpha = 0.5
         mask_indices = np.any(color_mask != [0, 0, 0], axis=-1)
@@ -404,7 +404,7 @@ class ImageEditorApp:
             alpha * color_mask[mask_indices] + (1 - alpha) * overlaid_image_array[mask_indices]
         ).astype("uint8")
         
-        # Update the canvas with the new overlaid image
+      
         overlaid_mask_image = Image.fromarray(overlaid_image_array)
         self.tk_overlaid_mask_image = ImageTk.PhotoImage(overlaid_mask_image)
         self.overlaid_mask_canvas.delete("all")
@@ -482,7 +482,7 @@ class ImageEditorApp:
             return "./weights/sam_vit_h_4b8939.pth"
 
     def update_model_selection(self, event=None):
-        self.model_type = self.model_variable.get()  # Get the current selection from the dropdown
+        self.model_type = self.model_variable.get()  
         if self.model_type == "MealSAM":
             self.model_type ="vit_b"
             self.sam_checkpoint = "./weights/MealSAM.pth"
@@ -504,8 +504,8 @@ class ImageEditorApp:
         if new_category_name and new_category_name.strip() and new_category_name not in self.categories:
             self.categories.append(new_category_name)
             self.category_dropdown["values"] = self.categories + ["Add new category..."]
-            self.update_categories_json()  # Update the JSON file with the new category.
-            self.category_variable.set(new_category_name)  # Set the newly added category as the selected value.
+            self.update_categories_json()  
+            self.category_variable.set(new_category_name)  
     
     def update_categories_json(self):
         # 
