@@ -23,46 +23,22 @@ limitations under the License.
 import os
 import tkinter as tk
 from tkinter import ttk
-from tkinter import filedialog, Menu
-from PIL import Image, ImageTk
+from tkinter import filedialog, Menu, Canvas, Radiobutton, IntVar, Scale, HORIZONTAL, StringVar, OptionMenu
+from PIL import Image, ImageTk, ImageDraw
 import cv2
 import numpy as np
 import torch
 import json
-
-
 from segment_anything import SamAutomaticMaskGenerator, SamPredictor
+from util import build_sam_vit_b, build_sam_vit_h, build_sam_vit_l
+import matplotlib.pyplot as plt
 
-from functools import partial
-from segment_anything.modeling import ImageEncoderViT, MaskDecoder, PromptEncoder, Sam, TwoWayTransformer
-
-def build_sam_vit_h(checkpoint=None):
-    return _build_sam(
-        encoder_embed_dim=1280,
-        encoder_depth=32,
-        encoder_num_heads=16,
-        encoder_global_attn_indexes=[7, 15, 23, 31],
-        checkpoint=checkpoint,
-    )
-
-def build_sam_vit_l(checkpoint=None):
-    return _build_sam(
-        encoder_embed_dim=1024,
-        encoder_depth=24,
-        encoder_num_heads=16,
-        encoder_global_attn_indexes=[5, 11, 17, 23],
-        checkpoint=checkpoint,
-    )
-
-def build_sam_vit_b(checkpoint=None):
-    return _build_sam(
-        encoder_embed_dim=768,
-        encoder_depth=12,
-        encoder_num_heads=12,
-        encoder_global_attn_indexes=[2, 5, 8, 11],
-        checkpoint=checkpoint,
-    )
-
+def update_sam_model(model_type, sam_checkpoint):
+    global sam  # Indicate that we're updating the global variable
+    device = "cpu" if model_type in ["vit_l", "vit_h"] else torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
+    sam.to(device=device)
+    return SamAutomaticMaskGenerator(sam)
 
 sam_model_registry = {
     "default": build_sam_vit_h,
@@ -71,74 +47,6 @@ sam_model_registry = {
     "vit_l": build_sam_vit_l,
     "vit_b": build_sam_vit_b,
 }
-def _build_sam(
-    encoder_embed_dim,
-    encoder_depth,
-    encoder_num_heads,
-    encoder_global_attn_indexes,
-    checkpoint=None,
-):
-    prompt_embed_dim = 256
-    image_size = 1024
-    vit_patch_size = 16
-    image_embedding_size = image_size // vit_patch_size
-    sam = Sam(
-        image_encoder=ImageEncoderViT(
-            depth=encoder_depth,
-            embed_dim=encoder_embed_dim,
-            img_size=image_size,
-            mlp_ratio=4,
-            norm_layer=partial(torch.nn.LayerNorm, eps=1e-6),
-            num_heads=encoder_num_heads,
-            patch_size=vit_patch_size,
-            qkv_bias=True,
-            use_rel_pos=True,
-            global_attn_indexes=encoder_global_attn_indexes,
-            window_size=14,
-            out_chans=prompt_embed_dim,
-        ),
-        prompt_encoder=PromptEncoder(
-            embed_dim=prompt_embed_dim,
-            image_embedding_size=(image_embedding_size, image_embedding_size),
-            input_image_size=(image_size, image_size),
-            mask_in_chans=16,
-        ),
-        mask_decoder=MaskDecoder(
-            num_multimask_outputs=3,
-            transformer=TwoWayTransformer(
-                depth=2,
-                embedding_dim=prompt_embed_dim,
-                mlp_dim=2048,
-                num_heads=8,
-            ),
-            transformer_dim=prompt_embed_dim,
-            iou_head_depth=3,
-            iou_head_hidden_dim=256,
-        ),
-        pixel_mean=[123.675, 116.28, 103.53],
-        pixel_std=[58.395, 57.12, 57.375],
-    )
-    sam.eval()
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-    if checkpoint is not None:
-        if device==torch.device('cpu'):
-            with open(checkpoint, "rb") as f:
-                state_dict = torch.load(f, map_location=torch.device('cpu'))
-        else:
-            with open(checkpoint, "rb") as f:
-                state_dict = torch.load(f)
-        sam.load_state_dict(state_dict)
-    return sam
-
-
-#%%
-def update_sam_model(model_type, sam_checkpoint):
-    global sam  
-    device = "cpu" if model_type in ["vit_l", "vit_h"] else torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
-    sam.to(device=device)
-    return SamAutomaticMaskGenerator(sam)
 
 class ScrolledListbox(tk.Toplevel):
     def __init__(self, parent, options, var, **kwargs):
@@ -161,7 +69,6 @@ class ScrolledListbox(tk.Toplevel):
             self.var.set(value)
             self.destroy()
 
-
 class AutocompleteCombobox(ttk.Combobox):
     def __init__(self, parent, categories, app_instance, **kwargs):
         super().__init__(parent, **kwargs)
@@ -171,7 +78,6 @@ class AutocompleteCombobox(ttk.Combobox):
         self.bind("<KeyRelease>", self.on_keyrelease)
         longest_category = max(categories, key=len)
         self.config(width=len(longest_category) + 3)  
-
     
     def on_keyrelease(self, event):
         if event.keysym in ["Up", "Down", "Left", "Right", "Return", "Tab", "Escape"]:
@@ -191,31 +97,24 @@ class AutocompleteCombobox(ttk.Combobox):
             self["values"] = filtered_data
         else:
             self["values"] = self.categories + ["Add new category..."]  
-    
       
         self.event_generate("<Down>")
+        self.focus()
         self.icursor(tk.END)
-        
-
-        
 
 class ImageEditorApp:
     def __init__(self, root):
-      
         self.root = root
         self.model_type = "MealSAM"  # Default model type
-        self.sam_checkpoint = "./weights/MealSAM.pth"
+        self.sam_checkpoint = "C:/Users/lubna/MealSAM_food_annotator/weights/MealSAM.pth"
         self.action_history=[]
-        
-        
+        self.semi_segmented_mask = None
         
         self.model_variable = tk.StringVar(value="MealSAM")  
         self.mask_generator = self.update_model_selection()  
 
-     
         model_options = ["MealSAM","vit_b", "vit_l", "vit_h"]
        
-        
         self.root.title("Food Annotator")
         icon = ImageTk.PhotoImage(file="./tool_resources/appicon.png")  
         self.root.iconphoto(False, icon)
@@ -225,7 +124,7 @@ class ImageEditorApp:
         
         self.image_uploaded = False
         
-        #File menu 
+        # File menu 
         file_menu = Menu(menubar, tearoff=0)
         menubar.add_cascade(label="File", menu=file_menu)
         file_menu.add_command(label="Upload", command=self.upload_image)
@@ -233,7 +132,6 @@ class ImageEditorApp:
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=root.quit)
         
-     
         upload_image_icon = ImageTk.PhotoImage(Image.open("./tool_resources/upload.png").resize((20, 20)))
         save_image_icon = ImageTk.PhotoImage(Image.open("./tool_resources/save.png").resize((20, 20)))
         
@@ -241,55 +139,67 @@ class ImageEditorApp:
         button_frame = tk.Frame(self.root)
         button_frame.pack(fill="x", anchor="n", pady=5)
         
-        #Upload Image
+        # Upload Image
         self.upload_button = tk.Button(button_frame, text="Upload", image=upload_image_icon, compound="left",
                                        command=self.upload_image)
         self.upload_button.image = upload_image_icon
         self.upload_button.pack(side="left", padx=5)
         
-        
-        #Save Files - Save Validated Mask, and resized image
+        # Save Files - Save Validated Mask, and resized image
         self.save_button = tk.Button(button_frame, text="Save", image=save_image_icon, compound="left",
                                      command=self.save_image)
         self.save_button.image = save_image_icon
         self.save_button.pack(side="left", padx=5)
         
-        
         model_selection_label = tk.Label(button_frame, text="Select Model:")
         model_selection_label.pack(side="left", padx=5)
 
- 
         self.model_selection_dropdown = ttk.Combobox(button_frame, textvariable=self.model_variable, values=model_options, state="readonly")
         self.model_selection_dropdown.pack(side="left", padx=5)
         self.model_selection_dropdown.bind("<<ComboboxSelected>>", self.update_model_selection)
 
-        
-        
         self.mask_generator = update_sam_model(self.model_variable.get(), self.determine_checkpoint_path(self.model_variable.get()))
         
-       
-          
-        
-        #Clears the include and exclude points 
+        # Clears the include and exclude points 
         self.clear_button = tk.Button(button_frame, text="Clear", command=self.clear_points)
         self.clear_button.pack(side="left", padx=5)
         
-        #Undo previously clicked point on the RGB
+        # Undo previously clicked point on the RGB
         self.undo_button = tk.Button(button_frame, text="Undo", command=self.undo_point)
         self.undo_button.pack(side="left", padx=5)
         
-        #Provided include/exclude points Mono Mask generated for object         
+        # Provided include/exclude points Mono Mask generated for object         
         self.semi_segment_button = tk.Button(button_frame, text="Semi-Segment", command=self.semi_segment)
         self.semi_segment_button.pack(side="left", padx=5)
         
+        self.brush_active = IntVar(value=0)
+        self.brush_radio = Radiobutton(root, text="Activate Brush", variable=self.brush_active, value=1, command=self.toggle_brush_options)
+        self.brush_radio.pack()
         
-                     
-        #food cat/labels to assign per specific segment       
+        self.deactivate_brush_radio = Radiobutton(root, text="Deactivate Brush", variable=self.brush_active, value=0, command=self.toggle_brush_options)
+        self.deactivate_brush_radio.pack()
+
+        self.brush_action = StringVar(value="Add")
+        self.brush_action_dropdown = OptionMenu(root, self.brush_action, "Add", "Delete")
+        self.brush_action_dropdown.pack()
+        self.brush_action_dropdown.config(state=tk.DISABLED)
+
+        self.brush_size_slider = Scale(root, from_=1, to=50, orient=HORIZONTAL, label="Brush Size")
+        self.brush_size_slider.pack()
+        self.brush_size_slider.set(10)
+        
+        self.brush_size = self.brush_size_slider.get()
+        self.brush_id = None
+        self.brush_image = None
+        self.paint_active = False
+        self.colors = []
+        self.current_label = 1  # Initialize current_label
+        # Food categories/labels to assign per specific segment       
         self.category_variable = tk.StringVar(root)
         self.load_categories_from_json("./tool_resources/categories.json")
         self.category_dropdown_label = tk.Label(button_frame, text="Select Segment Category:")
         self.category_dropdown_label.pack(side="left", padx=5)
-        self.category_dropdown = self.category_dropdown = AutocompleteCombobox(button_frame, self.categories, self, textvariable=self.category_variable)
+        self.category_dropdown = AutocompleteCombobox(button_frame, self.categories, self, textvariable=self.category_variable)
         self.category_dropdown.pack(side="left", padx=5)
         style = ttk.Style(self.root)
         style.theme_use("alt")  
@@ -299,7 +209,6 @@ class ImageEditorApp:
         self.annotation_option = tk.StringVar(value="No")  
         self.annotation_type = tk.StringVar(value="Weight")  
         
-       
         self.annotation_option_label = tk.Label(button_frame, text="Input weight/volume?")
         self.annotation_option_label.pack(side="left", padx=5)
         self.yes_radio_button = tk.Radiobutton(button_frame, text="Yes", variable=self.annotation_option, value="Yes", command=self.toggle_annotation_fields)
@@ -307,30 +216,23 @@ class ImageEditorApp:
         self.yes_radio_button.pack(side="left", padx=5)
         self.no_radio_button.pack(side="left", padx=5)
         
-        
         self.annotation_type_label = tk.Label(button_frame, text="Type:", state="disabled")
         self.annotation_type_menu = ttk.Combobox(button_frame, textvariable=self.annotation_type, state="disabled", values=["Weight", "Volume"])
         self.annotation_type_label.pack(side="left", padx=5)
         self.annotation_type_menu.pack(side="left", padx=5)
 
-        
-        
         self.grams_label = tk.Label(button_frame, text="Weight (g) / Volume (ml):")
         self.grams_label.pack(side="left", padx=10)
         
         self.grams_entry = tk.Entry(button_frame)  
         self.grams_entry.pack(side="left", padx=10)
-
     
         self.yes_radio_button = tk.Radiobutton(button_frame, text="Yes", variable=self.annotation_option, value="Yes", command=self.toggle_annotation_fields)
         self.no_radio_button = tk.Radiobutton(button_frame, text="No", variable=self.annotation_option, value="No", command=self.toggle_annotation_fields)
        
-        
-        
         self.validate_mask_button = tk.Button(button_frame, text="Validate", command=self.validate_mask)
         self.validate_mask_button.pack(side="left", padx=10)
        
-      
         self.image_on_canvas = None
         self.image_path = None
         self.photo_image = None
@@ -348,10 +250,7 @@ class ImageEditorApp:
         self.segment_data = {}  
         self.all_nutrient_data = []
         
-        
-        
-        
-        #Include/Exclude points
+        # Include/Exclude points
         self.include_label = tk.Label(self.root, text="Include Pixels: ")
         self.include_label.pack(side="bottom")
         self.exclude_label = tk.Label(self.root, text="Exclude Pixels: ")
@@ -360,18 +259,17 @@ class ImageEditorApp:
         self.display_label = tk.Label(self.root, text="Category and weight: ")
         self.display_label.pack(side="bottom")
         
-        #Clears all the canvas items except the RGB image
+        # Clears all the canvas items except the RGB image
         self.clear_all_button = tk.Button(button_frame, text="Clear All", command=self.clear_canvas_all)
         self.clear_all_button.pack(side="left", padx=5)
         
-        
-        #Will produce the automatic segmentation mask from SAM
+        # Will produce the automatic segmentation mask from SAM
         self.segment_button = tk.Button(button_frame, text="Segment", command=self.segment_image)
         self.segment_button.pack(side="left", padx=5)
         
-        ###Displaying of imgs and masks
+        ### Displaying of images and masks
         
-        #RGB Image
+        # RGB Image
         self.canvas_frame = tk.Frame(self.root)
         self.canvas_frame.pack(fill="both", expand=True, side="left")
         self.rgb_image_label = tk.Label(self.canvas_frame, text="RGB Image")
@@ -379,8 +277,7 @@ class ImageEditorApp:
         self.canvas = tk.Canvas(self.canvas_frame, cursor="cross")
         self.canvas.pack(fill="both", expand=True)
 
-        
-        #Colored mask generated by SAM either by clicking "Segment" or "Semi-segment" buttons
+        # Colored mask generated by SAM either by clicking "Segment" or "Semi-segment" buttons
         self.mask_canvas_frame = tk.Frame(self.root)
         self.mask_canvas_frame.pack(fill="both", expand=True, side="left")
         self.mask_label = tk.Label(self.mask_canvas_frame, text="Model's Mask")
@@ -388,15 +285,16 @@ class ImageEditorApp:
         self.mask_canvas = tk.Canvas(self.mask_canvas_frame, cursor="cross")
         self.mask_canvas.pack(fill="both", expand=True)
 
-        #Overlaid mask generated by SAM on top of the RGB        
+        # Overlaid mask generated by SAM on top of the RGB        
         self.overlaid_mask_frame = tk.Frame(self.root)
         self.overlaid_mask_frame.pack(fill="both", expand=True, side="left")
         self.overlaid_mask_label = tk.Label(self.overlaid_mask_frame, text="Overlaid Model's mask")
         self.overlaid_mask_label.pack()
         self.overlaid_mask_canvas = tk.Canvas(self.overlaid_mask_frame, cursor="cross")
         self.overlaid_mask_canvas.pack(fill="both", expand=True)
-        
-        #Colored validated mask - can contain more than one segmented object - Validate button must be clicked 
+       
+        self.overlaid_mask_canvas.bind("<Motion>", self.draw_brush)  # Allow brush drawing on top of the overlaid mask
+        # Colored validated mask - can contain more than one segmented object - Validate button must be clicked 
         self.validated_mask_frame = tk.Frame(self.root)
         self.validated_mask_frame.pack(fill="both", expand=True, side="left")
         self.validated_mask_label = tk.Label(self.validated_mask_frame, text="Validated Mask")
@@ -404,44 +302,196 @@ class ImageEditorApp:
         self.validated_mask_canvas = tk.Canvas(self.validated_mask_frame, cursor="cross")
         self.validated_mask_canvas.pack(fill="both", expand=True)
      
-        #Overlaid validated mask on the RGB
+        # Overlaid validated mask on the RGB
         self.overlaid_validated_mask_frame = tk.Frame(self.root)
         self.overlaid_validated_mask_frame.pack(fill="both", expand=True, side="right")
         self.overlaid_validated_mask_label = tk.Label(self.overlaid_validated_mask_frame, text="Overlaid Validated Mask")
         self.overlaid_validated_mask_label.pack()
         self.overlaid_validated_mask_canvas = tk.Canvas(self.overlaid_validated_mask_frame, cursor="cross")
         self.overlaid_validated_mask_canvas.pack(fill="both", expand=True)
-
     
+    def create_brush_image(self, size, color, alpha):
+        brush_image = Image.new("RGBA", (size * 2, size * 2), (255, 255, 255, 0))
+        draw = ImageDraw.Draw(brush_image)
+        draw.ellipse((0, 0, size * 2, size * 2), fill=color + (int(255 * alpha),))
+        return brush_image
 
+    def draw_brush(self, event):
+        if self.brush_active.get() == 1:  # Brush is active
+            x, y = event.x, event.y
+            size = self.brush_size_slider.get()
+            action = self.brush_action.get()
+    
+            brush_color = (255, 0, 0) if action == 'Delete' else (0, 255, 0)
+            alpha = 0.5
+    
+            self.brush_image = self.create_brush_image(size, brush_color, alpha)
+            self.tk_brush_image = ImageTk.PhotoImage(self.brush_image)
+    
+            if self.brush_id:
+                self.overlaid_mask_canvas.delete(self.brush_id)
+            self.brush_id = self.overlaid_mask_canvas.create_image(x, y, image=self.tk_brush_image, anchor="center")
+            self.overlaid_mask_canvas.lift(self.brush_id)  # Ensure brush is on top
+    
+            # Update the mask directly if the user is actively painting
+            if self.paint_active:
+                self.paint(event)
 
+    def clear_brush(self, event):
+        if self.brush_id:
+            self.overlaid_mask_canvas.delete(self.brush_id)
+            self.brush_id = None    
+
+    def start_paint(self, event):
+        self.paint_active = True
+        x, y = event.x, event.y
+        if 0 <= x < self.merged_mask.shape[1] and 0 <= y < self.merged_mask.shape[0]:
+            self.current_label = self.merged_mask[y, x]
+            if self.current_label == 0 and self.brush_action.get() == 'Add':
+                # Create a new label if adding on background
+                self.max_label += 1
+                self.current_label = self.max_label
+                self.colors.append(np.random.randint(0, 256, 3).tolist())
+        else:
+            self.current_label = 1  # Default label
+        self.paint(event)
+
+    def stop_paint(self, event):
+        self.paint_active = False  
+        self.clear_brush(event)
+        # Update the mask on the canvas
+        self.update_model_mask_on_canvas()
+        self.update_overlaid_mask_on_canvas()
         
+    def apply_brush_to_mask(self, x, y, size, action):
+        if action == 'Add':
+            new_label = self.current_label
+            if new_label == 0:
+                # If clicking on background, create a new label
+                self.max_label += 1
+                new_label = self.max_label
+                self.colors.append(np.random.randint(0, 256, 3).tolist())
+                self.current_label = new_label
+        elif action == 'Delete':
+            new_label = 0
+
+        for i in range(-size, size):
+            for j in range(-size, size):
+                if i**2 + j**2 <= size**2:  # Ensures the points are within a circle
+                    x_i = x + i
+                    y_j = y + j
+                    if 0 <= x_i < self.merged_mask.shape[1] and 0 <= y_j < self.merged_mask.shape[0]:
+                        self.merged_mask[y_j, x_i] = new_label
+
+    def update_model_mask_on_canvas(self):
+        # Create a color mask using the updated merged_mask
+        color_mask = self.colorize_mask(self.merged_mask)
+        mask_image = Image.fromarray(color_mask)
+        self.tk_model_mask_image = ImageTk.PhotoImage(mask_image)
+        self.mask_canvas.delete("all")
+        self.mask_canvas.create_image(0, 0, anchor="nw", image=self.tk_model_mask_image)
+        self.mask_canvas.image = self.tk_model_mask_image
+
+    def update_overlaid_mask_on_canvas(self):
+        # Create a color mask using the updated merged_mask
+        color_mask = self.colorize_mask(self.merged_mask)
+        
+        # Blend the original image with the updated color mask
+        overlaid_image_array = np.array(self.image.convert("RGB"))
+        alpha = 0.5
+        mask_indices = np.any(color_mask != [0, 0, 0], axis=-1)
+        overlaid_image_array[mask_indices] = (
+            alpha * color_mask[mask_indices] + (1 - alpha) * overlaid_image_array[mask_indices]
+        ).astype("uint8")
+        
+        # Update the canvas with the new overlaid image
+        overlaid_mask_image = Image.fromarray(overlaid_image_array)
+        self.tk_overlaid_mask_image = ImageTk.PhotoImage(overlaid_mask_image)
+        self.overlaid_mask_canvas.delete("all")
+        self.overlaid_mask_canvas.create_image(0, 0, anchor="nw", image=self.tk_overlaid_mask_image)
+        self.overlaid_mask_canvas.image = self.tk_overlaid_mask_image
+
+    def colorize_mask(self, mask):
+        color_mask = np.zeros((mask.shape[0], mask.shape[1], 3), dtype=np.uint8)
+        unique_labels = np.unique(mask)
+        for label in unique_labels:
+            if label == 0:
+                continue
+            if label > len(self.colors):
+                self.colors.append(np.random.randint(0, 256, 3).tolist())
+            color = np.array(self.colors[label - 1])
+            color_mask[mask == label] = color
+        return color_mask
+
+    def paint(self, event):
+        x, y = event.x, event.y
+        size = self.brush_size_slider.get()
+        action = self.brush_action.get()
+        self.apply_brush_to_mask(x, y, size, action)
+        self.update_model_mask_on_canvas()
+        self.update_overlaid_mask_on_canvas()
+
+    def paint_once(self, event):
+        self.paint_active = True
+        self.paint(event)
+        self.paint_active = False
+
+    def toggle_brush_options(self):
+        if self.brush_active.get() == 1:
+            if self.mask_photo_image is None:
+                self.create_mask()
+
+            self.brush_action_dropdown.config(state=tk.NORMAL)
+            self.brush_size_slider.config(state=tk.NORMAL)
+            self.semi_segment_button.config(state=tk.DISABLED)
+            self.canvas.unbind("<Button-1>")
+            self.canvas.unbind("<Button-3>")
+            self.overlaid_mask_canvas.bind("<Motion>", self.draw_brush)
+            self.overlaid_mask_canvas.bind("<Leave>", self.clear_brush)
+            
+            self.overlaid_mask_canvas.bind("<ButtonPress-1>", self.start_paint)
+            self.overlaid_mask_canvas.bind("<ButtonRelease-1>", self.stop_paint)
+            self.overlaid_mask_canvas.bind("<B1-Motion>", self.paint)
+            self.overlaid_mask_canvas.bind("<Button-1>", self.paint_once)
+            
+        else:
+            self.brush_action_dropdown.config(state=tk.DISABLED)
+            self.brush_size_slider.config(state=tk.DISABLED)
+            self.semi_segment_button.config(state=tk.NORMAL)
+            self.canvas.bind("<Button-1>", self.include_left_click)
+            self.canvas.bind("<Button-3>", self.exclude_right_click)
+         
+            self.overlaid_mask_canvas.unbind("<Motion>")
+            self.overlaid_mask_canvas.unbind("<Leave>")
+            
+            self.overlaid_mask_canvas.unbind("<ButtonPress-1>")
+            self.overlaid_mask_canvas.unbind("<ButtonRelease-1>")
+            self.overlaid_mask_canvas.unbind("<B1-Motion>")
+            self.overlaid_mask_canvas.unbind("<Button-1>")
+            
+            self.clear_brush(None)
+
     def determine_checkpoint_path(self, model_type):
         if model_type == "MealSAM":
-            return "./weights/MealSAM.pth"
-          
+            return "C:/Users/lubna/MealSAM_food_annotator/weights/MealSAM.pth"          
         elif model_type == "vit_b":
-            return "./weights/sam_vit_b_01ec64.pth"
-        
+            return "C:/Users/lubna/Downloads/segmentation_tool/segmentation_tool/MobileSAM/weights/sam_vit_b_01ec64.pth"
         elif model_type == "vit_l":
-            return "./weights/sam_vit_l_0b3195.pth"
+            return "C:/Users/lubna/Downloads/segmentation_tool/segmentation_tool/MobileSAM/weights/sam_vit_l_0b3195.pth"
         elif model_type == "vit_h":
-            return "./weights/sam_vit_h_4b8939.pth"
+            return "C:/Users/lubna/Downloads/segmentation_tool/segmentation_tool/MobileSAM/weights/sam_vit_h_4b8939.pth"
 
     def update_model_selection(self, event=None):
         self.model_type = self.model_variable.get()  # Get the current selection from the dropdown
         if self.model_type == "MealSAM":
             self.model_type ="vit_b"
-            self.sam_checkpoint = "./weights/MealSAM.pth"
-         
-         
-        elif self.model_type == "vit_b":
-           
-            self.sam_checkpoint = "./weights/sam_vit_b_01ec64.pth"
+            self.sam_checkpoint = "C:/Users/lubna/MealSAM_food_annotator/weights/MealSAM.pth"
+        elif self.model_type == "vit_b":  
+            self.sam_checkpoint = "C:/Users/lubna/Downloads/segmentation_tool/segmentation_tool/MobileSAM/weights/sam_vit_b_01ec64.pth"
         elif self.model_type == "vit_l":
-            self.sam_checkpoint = "./weights/sam_vit_l_0b3195.pth"
+            self.sam_checkpoint = "C:/Users/lubna/Downloads/segmentation_tool/segmentation_tool/MobileSAM/weights/sam_vit_l_0b3195.pth"
         elif self.model_type == "vit_h":
-            self.sam_checkpoint = "./weights/sam_vit_h_4b8939.pth"
+            self.sam_checkpoint = "C:/Users/lubna/Downloads/segmentation_tool/segmentation_tool/MobileSAM/weights/sam_vit_h_4b8939.pth"
 
         # Initialize SAM model with current selection
         sam = sam_model_registry[self.model_type](checkpoint=self.sam_checkpoint)
@@ -449,12 +499,10 @@ class ImageEditorApp:
         sam.to(device=device)
         self.mask_generator = SamAutomaticMaskGenerator(sam)
 
-    
     def add_new_category(self):
         new_category_name = tk.simpledialog.askstring("New Category", "Enter new category name:")
         if new_category_name and new_category_name.strip() and new_category_name not in self.categories:
             self.categories.append(new_category_name)
-           # self.categories.sort()  # .
             self.category_dropdown["values"] = self.categories + ["Add new category..."]
             self.update_categories_json()  # Update the JSON file with the new category.
             self.category_variable.set(new_category_name)  # Set the newly added category as the selected value.
@@ -482,20 +530,15 @@ class ImageEditorApp:
             self.grams_entry.config(state="disabled")
             self.grams_entry.delete(0, tk.END)  
 
-    
     def open_scrolled_listbox(self):
         ScrolledListbox(self.root, self.categories, self.category_variable, height=10)
-        
 
     def load_categories_from_json(self, json_file_path):
         try:
             with open(json_file_path, "r") as file:
                 data = json.load(file)
-             
                 
             self.categories = data
-
-            
             self.color_map = self.create_color_map()
         except FileNotFoundError:
             print(f"The file {json_file_path} was not found.")
@@ -504,7 +547,7 @@ class ImageEditorApp:
             print(f"The file {json_file_path} does not contain valid JSON.")
             self.categories = []
             
-    #Logic for Upload button
+    # Logic for Upload button
     def upload_image(self):
         self.include_pixels = []
         self.exclude_pixels = []
@@ -514,8 +557,8 @@ class ImageEditorApp:
         self.include_click_count = 0
         self.exclude_click_count = 0
     
-        self.include_label.config(text="Include Pixels (x,y): ") #Include pixels are assigned a label of 1 - i.e. Foreground -- appear blue
-        self.exclude_label.config(text="Exclude Pixels (x,y): ") #Exclude pixels are assigned a label of 0 - i.e. Background -- appear pink
+        self.include_label.config(text="Include Pixels (x,y): ") # Include pixels are assigned a label of 1 - i.e. Foreground -- appear blue
+        self.exclude_label.config(text="Exclude Pixels (x,y): ") # Exclude pixels are assigned a label of 0 - i.e. Background -- appear pink
         
         if hasattr(self, "validated_mask"):
             del self.validated_mask
@@ -528,7 +571,7 @@ class ImageEditorApp:
         if not self.image_path:
             return
         
-        #save the directory for proper file saving later in same directory as previously
+        # Save the directory for proper file saving later in same directory as previously
         self.image_directory = os.path.dirname(self.image_path) 
         self.image_filename = os.path.basename(self.image_path)
         
@@ -539,7 +582,6 @@ class ImageEditorApp:
             new_height = int(original_image.height * (380 / original_image.width))
             original_image = original_image.resize((380, new_height))
             
-        
         self.image = original_image
         self.photo_image = ImageTk.PhotoImage(self.image)
         
@@ -551,6 +593,20 @@ class ImageEditorApp:
         self.reset_canvas()
         self.mask_canvas.delete("all")
         
+        self.overlaid_mask_canvas.delete("all")
+        self.validated_mask_canvas.delete("all")
+        self.overlaid_validated_mask_canvas.delete("all")
+        
+        self.create_mask()
+        self.reset_canvas()
+        self.mask_canvas.delete("all")
+        
+        self.image_on_canvas = self.canvas.create_image(0, 0, anchor="nw", image=self.photo_image)
+        self.canvas.image = self.photo_image
+        
+        self.canvas.bind("<Button-1>", self.include_left_click)
+        self.canvas.bind("<Button-3>", self.exclude_right_click)
+        
         self.image_on_canvas = self.canvas.create_image(
             0, 0, anchor="nw", image=self.photo_image)
     
@@ -558,6 +614,9 @@ class ImageEditorApp:
     
         self.canvas.bind("<Button-1>", self.include_left_click)
         self.canvas.bind("<Button-3>", self.exclude_right_click)
+        
+        self.overlaid_mask_canvas.create_image(0, 0, anchor="nw", image=self.photo_image)
+        self.overlaid_mask_canvas.image = self.photo_image
 
     def save_image(self):
         if hasattr(self,"image_filename"):
@@ -588,25 +647,21 @@ class ImageEditorApp:
                             nutrient_file.write(f"{entry['Category']}: No weight/volume specified\n")
                 
                 tk.messagebox.showinfo("Success", "Image, validated mask, and weight information saved successfully!")
-            else:
-                
+            else:        
                 tk.messagebox.showerror("Error", "Nothing available to be saved. Both Image and Validated mask must be present")
         else:
-           
             tk.messagebox.showerror("Error", "Nothing available to be saved. Both Image and Validated mask must be present")
 
     def create_mask(self):
         mask = np.zeros((self.image.height, self.image.width), dtype=np.uint8)
         mask_image = Image.fromarray(mask)
-
         self.mask_photo_image = ImageTk.PhotoImage(mask_image)
         if self.mask_image_on_canvas is not None:
             self.mask_canvas.delete(self.mask_image_on_canvas)  
-        
         self.mask_image_on_canvas = self.mask_canvas.create_image(
             0, 0, anchor="nw", image=self.mask_photo_image)
  
-    #Used by clear all button   
+    # Used by clear all button   
     def clear_canvas_all(self):
         self.include_pixels = []
         self.exclude_pixels = []
@@ -625,32 +680,28 @@ class ImageEditorApp:
         self.validate_mask=None
         self.validated_mask= None
        
-
-   
     def segment_image(self):
         if not self.image_uploaded:
             tk.messagebox.showerror("Error", "Please upload an image first.")
             return
-        
+     
         original_image_array = np.array(self.image.convert("RGB"))  
-    
         image_array = np.asarray(self.image)
         image_array = cv2.cvtColor(image_array, cv2.COLOR_BGR2RGB)
-        
         masks = self.mask_generator.generate(image_array)
-    
         num_masks = len(masks)
         merged_mask = np.zeros_like(masks[0]["segmentation"], dtype=int)
-    
-        colors = np.random.randint(0, 256, size=(num_masks, 3), dtype=np.uint8)
-    
+        self.colors = []  # Reset colors
         for i in range(num_masks):
             mask_value = i + 1
             merged_mask[masks[i]["segmentation"]] = mask_value
+            random_color = np.random.randint(0, 256, size=3).tolist()
+            self.colors.append(random_color)
     
-        color_mask = np.zeros((merged_mask.shape[0], merged_mask.shape[1], 3), dtype=np.uint8)
-        for i in range(num_masks):
-            color_mask[merged_mask == i + 1] = colors[i]
+        self.merged_mask = merged_mask
+        self.max_label = np.max(self.merged_mask)
+
+        color_mask = self.colorize_mask(self.merged_mask)
     
         alpha = 0.5 
         mask_indices = np.any(color_mask != [0, 0, 0], axis=-1)  
@@ -671,18 +722,17 @@ class ImageEditorApp:
         self.mask_image_on_canvas = self.mask_canvas.create_image(
             0, 0, anchor="nw", image=new_mask_photo_image)
         self.mask_canvas.image = new_mask_photo_image 
-                
 
-    #unique color for each single category
+    # Unique color for each single category
     def create_color_map(self):
         num_categories = len(self.categories)
         num_categories +=1
         color_map = np.zeros((num_categories, 3), dtype=np.uint16)
         for i in range(num_categories):
-            color_map[i] = [i * 20, i * 30, i * 50]
+            color_map[i] = [i * 20 % 256, i * 30 % 256, i * 50 % 256]
         return color_map
 
-    #Semi-segment button logic - considers include/exclude points
+    # Semi-segment button logic - considers include/exclude points
     def semi_segment(self):
         if not self.image_uploaded:
             tk.messagebox.showerror("Error", "Please upload an image first.")
@@ -692,21 +742,20 @@ class ImageEditorApp:
             tk.messagebox.showerror("Error", "Semi Segment needs include points")
             return
     
-        if app.exclude_pixels:
-            include_coords = np.asarray(app.include_pixels)
-            exclude_coords = np.asarray(app.exclude_pixels)
-            include_labels = np.array([1] * len(app.include_pixels)) #Include is foreground
-            exclude_labels = np.array([0] * len(app.exclude_pixels)) #Exclude is background
+        if self.exclude_pixels:
+            include_coords = np.asarray(self.include_pixels)
+            exclude_coords = np.asarray(self.exclude_pixels)
+            include_labels = np.array([1] * len(self.include_pixels))  # Include is foreground
+            exclude_labels = np.array([0] * len(self.exclude_pixels))  # Exclude is background
             inputarray = np.concatenate((include_coords, exclude_coords))
             input_label = np.concatenate((include_labels, exclude_labels))
         else:
             inputarray = np.asarray(self.include_pixels)
-            input_label = np.array([1] * len(app.include_pixels))
+            input_label = np.array([1] * len(self.include_pixels))
     
-        #Call model - multimasks not to be generated
+        # Call model - multimasks not to be generated
         sam = sam_model_registry[self.model_type](checkpoint=self.sam_checkpoint)
         device="cpu" if self.model_type in ["vit_l", "vit_h"] else torch.device("cuda" if torch.cuda.is_available() else "cpu")
- 
         sam.to(device=device)
         predictor = SamPredictor(sam)
         image_array = np.asarray(self.image)
@@ -721,16 +770,17 @@ class ImageEditorApp:
         num_masks = len(masks)
         merged_mask = np.zeros_like(masks[0], dtype=int)
 
-        colors = np.random.randint(0, 256, size=(num_masks, 3), dtype=np.uint8)
-
+        self.colors = []  # Reset colors
         for i in range(num_masks):
             mask_value = i + 1
-            merged_mask[masks[i] == mask_value] = mask_value
-    
-        self.merged_mask=merged_mask
-        color_mask = np.zeros((merged_mask.shape[0], merged_mask.shape[1], 3), dtype=np.uint8)
-        for i in range(num_masks):
-            color_mask[merged_mask == i + 1] = colors[i]
+            merged_mask[masks[i] == True] = mask_value
+            random_color = np.random.randint(0, 256, size=3).tolist()
+            self.colors.append(random_color)
+         
+        self.merged_mask = merged_mask
+        self.max_label = np.max(self.merged_mask)
+         
+        color_mask = self.colorize_mask(self.merged_mask)
     
         mask_indices = np.any(color_mask != [0, 0, 0], axis=-1)
         overlay_image_array = image_array.copy()
@@ -755,20 +805,17 @@ class ImageEditorApp:
             0, 0, anchor="nw", image=new_mask_photo_image)
         self.mask_canvas.image = new_mask_photo_image 
        
-        
-      
     def display_colored_validated_mask(self, validated_mask, color_map):    
-            colored_validated_mask = np.zeros((validated_mask.shape[0], validated_mask.shape[1], 3), dtype=np.uint8)
-            for category_index, color in enumerate(color_map):
-                colored_validated_mask[validated_mask == category_index] = color
-      
-            colored_validated_mask_image = Image.fromarray(colored_validated_mask)
-            colored_validated_mask_photo_image = ImageTk.PhotoImage(colored_validated_mask_image)   
-            self.validated_mask_canvas.delete("all")
-            self.validated_mask_canvas.create_image(0, 0, anchor="nw", image=colored_validated_mask_photo_image)
-            self.validated_mask_canvas.image = colored_validated_mask_photo_image
-        
-    
+        colored_validated_mask = np.zeros((validated_mask.shape[0], validated_mask.shape[1], 3), dtype=np.uint8)
+        for category_index, color in enumerate(color_map):
+            colored_validated_mask[validated_mask == category_index] = color
+  
+        colored_validated_mask_image = Image.fromarray(colored_validated_mask)
+        colored_validated_mask_photo_image = ImageTk.PhotoImage(colored_validated_mask_image)   
+        self.validated_mask_canvas.delete("all")
+        self.validated_mask_canvas.create_image(0, 0, anchor="nw", image=colored_validated_mask_photo_image)
+        self.validated_mask_canvas.image = colored_validated_mask_photo_image
+
     def display_colored_validated_mask2(self, validated_mask, color_map, alpha=0.5):
         colored_validated_mask = np.zeros((validated_mask.shape[0], validated_mask.shape[1], 3), dtype=np.uint8)
         for category_index, color in enumerate(color_map):
@@ -787,8 +834,6 @@ class ImageEditorApp:
         self.overlaid_validated_mask_canvas.create_image(0, 0, anchor="nw", image=overlaid_validated_mask_photo_image)
         self.overlaid_validated_mask_canvas.image = overlaid_validated_mask_photo_image
 
-    
-
     def validate_mask(self):
         if not self.image_uploaded:
             tk.messagebox.showerror("Error", "Please upload an image first.")
@@ -801,16 +846,13 @@ class ImageEditorApp:
         selected_category = self.category_variable.get()
         if not selected_category:
             tk.messagebox.showerror("Error", "No category selected.")
-            return
-    
-       
+            return       
         try:
             category_index = self.categories.index(selected_category) + 1
         except ValueError:
             tk.messagebox.showerror("Error", "Selected category not found in categories list.")
             return
     
-     
         annotation_data = None
         if self.annotation_option.get() == "Yes":
             annotation_type = self.annotation_type.get()
@@ -819,7 +861,6 @@ class ImageEditorApp:
             except ValueError:
                 tk.messagebox.showerror("Error", f"Invalid input for {annotation_type.lower()}. Please enter a valid number.")
                 return
-    
         
         existing_entry = next((entry for entry in self.all_nutrient_data
                                if entry['Include Pixels'] == self.include_pixels and entry['Exclude Pixels'] == self.exclude_pixels), None)
@@ -838,7 +879,7 @@ class ImageEditorApp:
                 new_entry[annotation_type] = annotation_data
             self.all_nutrient_data.append(new_entry)
     
-        # Merge masks w new category index
+        # Merge masks with new category index
         if hasattr(self, "validated_mask"):
             existing_validated_mask = self.validated_mask
         else:
@@ -860,11 +901,7 @@ class ImageEditorApp:
         self.display_colored_validated_mask2(validated_mask, self.color_map)
     
         self.update_nutrient_data_display()
-    
-    
 
-    
-    
     def update_nutrient_data_display(self):
         display_text = "Nutrient Data:\n"
         for entry in self.all_nutrient_data:
@@ -877,13 +914,11 @@ class ImageEditorApp:
                 display_text += "No weight/volume specified\n"
         self.display_label.config(text=display_text)
 
-
-    
     def merge_masks(self, new_mask, existing_mask, new_category_index): 
         if existing_mask is None:
-           merged_mask = new_mask.copy() 
+            merged_mask = new_mask.copy() 
         else:
-           merged_mask = existing_mask.copy()
+            merged_mask = existing_mask.copy()
            
         new_category_areas = new_mask == 1  
         merged_mask[new_category_areas] = new_category_index
@@ -892,6 +927,7 @@ class ImageEditorApp:
 
     def reset_canvas(self):
         self.canvas.delete("all")  
+
     def is_within_image_bounds(self, x, y):
         return 0 <= x < self.image.width and 0 <= y < self.image.height
 
@@ -954,12 +990,9 @@ class ImageEditorApp:
         for x, y in points:
             self.highlight_pixels(x, y, color, 5)
 
-
     def update_labels(self):
         self.include_label.config(text=f"Include Pixels: {self.include_pixels}")
         self.exclude_label.config(text=f"Exclude Pixels: {self.exclude_pixels}")
-
-   
 
 if __name__ == "__main__":
     root = tk.Tk()
