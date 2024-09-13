@@ -10,6 +10,8 @@ The tool and MealSAM is licensed under the Apache License, Version 2.0 (the "Lic
 
 This page features the code for the semi-automatic segmentation tool submitted for demo presentation pending acceptance.
 The tool is designed for meal image segmentation leveraging [SAM](https://github.com/facebookresearch/segment-anything) featuring pre-trained versions of SAM along with a fine-tuned version of SAM's mask decoder, dubbed MealSAM, with the ViT-B backbone tailored specifically for food image segmentation.
+Video available [here](https://youtu.be/XE22s46Zr4k?si=bmRHk6qQUf7QRENs)
+
 
 <!---![Inputs & Outputs](/images/paperdigest_seg.png "Inputs & Outputs")--->
 <p align="center">
