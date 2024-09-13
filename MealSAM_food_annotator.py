@@ -106,7 +106,7 @@ class ImageEditorApp:
     def __init__(self, root):
         self.root = root
         self.model_type = "MealSAM"  # Default model type
-        self.sam_checkpoint = "C:/Users/lubna/MealSAM_food_annotator/weights/MealSAM.pth"
+        self.sam_checkpoint = "./weights/MealSAM.pth"
         self.action_history=[]
         self.semi_segmented_mask = None
         
@@ -473,25 +473,25 @@ class ImageEditorApp:
 
     def determine_checkpoint_path(self, model_type):
         if model_type == "MealSAM":
-            return "C:/Users/lubna/MealSAM_food_annotator/weights/MealSAM.pth"          
+            return "./weights/MealSAM.pth"          
         elif model_type == "vit_b":
-            return "C:/Users/lubna/Downloads/segmentation_tool/segmentation_tool/MobileSAM/weights/sam_vit_b_01ec64.pth"
+            return "./weights/sam_vit_b_01ec64.pth"
         elif model_type == "vit_l":
-            return "C:/Users/lubna/Downloads/segmentation_tool/segmentation_tool/MobileSAM/weights/sam_vit_l_0b3195.pth"
+            return "./weights/sam_vit_l_0b3195.pth"
         elif model_type == "vit_h":
-            return "C:/Users/lubna/Downloads/segmentation_tool/segmentation_tool/MobileSAM/weights/sam_vit_h_4b8939.pth"
+            return "./weights/sam_vit_h_4b8939.pth"
 
     def update_model_selection(self, event=None):
         self.model_type = self.model_variable.get()  # Get the current selection from the dropdown
         if self.model_type == "MealSAM":
             self.model_type ="vit_b"
-            self.sam_checkpoint = "C:/Users/lubna/MealSAM_food_annotator/weights/MealSAM.pth"
+            self.sam_checkpoint = "./weights/MealSAM.pth"
         elif self.model_type == "vit_b":  
-            self.sam_checkpoint = "C:/Users/lubna/Downloads/segmentation_tool/segmentation_tool/MobileSAM/weights/sam_vit_b_01ec64.pth"
+            self.sam_checkpoint = "./weights/sam_vit_b_01ec64.pth"
         elif self.model_type == "vit_l":
-            self.sam_checkpoint = "C:/Users/lubna/Downloads/segmentation_tool/segmentation_tool/MobileSAM/weights/sam_vit_l_0b3195.pth"
+            self.sam_checkpoint = "./weights/sam_vit_l_0b3195.pth"
         elif self.model_type == "vit_h":
-            self.sam_checkpoint = "C:/Users/lubna/Downloads/segmentation_tool/segmentation_tool/MobileSAM/weights/sam_vit_h_4b8939.pth"
+            self.sam_checkpoint = "./weights/sam_vit_h_4b8939.pth"
 
         # Initialize SAM model with current selection
         sam = sam_model_registry[self.model_type](checkpoint=self.sam_checkpoint)
