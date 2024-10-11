@@ -4,3 +4,4 @@ Pillow==10.3.0
 segment_anything==1.0
 torch==2.0.1+cu118
 torchvision
+matplotlib
