@@ -889,7 +889,7 @@ class ImageEditorApp:
         self.validated_mask = validated_mask
     
         self.val_copy = validated_mask.copy()
-    
+        validated_mask=validated_mask.astype(np.uint8)##11ct
         validated_mask_image = Image.fromarray(validated_mask)
         validated_mask_photo_image = ImageTk.PhotoImage(validated_mask_image)
     
