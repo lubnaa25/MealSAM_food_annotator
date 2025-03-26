@@ -644,7 +644,7 @@ class ImageEditorApp:
                     for entry in self.all_nutrient_data:
                         weight = entry.get('Weight')
                         volume = entry.get('Volume')
-                        portions = entry.get('Portions')
+                        portions = entry.get('Portion')
                         carbohydrates = entry.get('Carbohydrates')
                         if weight:
                             nutrient_file.write(f"{entry['Category']}: {weight} grams\n")
@@ -653,7 +653,7 @@ class ImageEditorApp:
                         if portions:
                             nutrient_file.write(f"{entry['Category']}: {portions} portions\n")
                         elif carbohydrates:
-                            nutrient_file.write(f"{entry['Category']}: {carbohydrates} grams\n")
+                            nutrient_file.write(f"{entry['Category']}: {carbohydrates} grams CHO\n")
                         else:
                             nutrient_file.write(f"{entry['Category']}: No weight/volume specified\n")
 
@@ -921,9 +921,10 @@ class ImageEditorApp:
                 display_text += f"{entry['Weight']} grams\n"
             elif 'Volume' in entry:
                 display_text += f"{entry['Volume']} ml\n"
-            elif 'Portions' in entry:
-                display_text += f"{entry['Portions']} portions\n"
+            elif 'Portion' in entry:
+                display_text += f"{entry['Portion']} portions\n"
             elif 'Carbohydrates' in entry:
+                print("avail")
                 display_text += f"{entry['Carbohydrates']} grams CHO\n"
             else:
                 display_text += "No weight/volume specified\n"
