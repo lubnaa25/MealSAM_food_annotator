@@ -256,6 +256,13 @@ class ImageEditorApp:
         self.all_nutrient_data = []
 
         # Include/Exclude points
+        footer_text = (
+            "Copyright © 2024 University of Bern, ARTORG Center for Biomedical Engineering Research, "
+            "[Lubnaa Abdur Rahman, Ioannis Papathanail, Lorenzo Brigato, Stavroula Mougiakakou]"
+        )
+        self.footer_label = tk.Label(self.root, text=footer_text, anchor="center", justify="center", wraplength=self.root.winfo_screenwidth())
+        self.footer_label.pack(side="bottom", fill="x", pady=(10, 5))
+
         self.include_label = tk.Label(self.root, text="Include Pixels: ")
         self.include_label.pack(side="bottom")
         self.exclude_label = tk.Label(self.root, text="Exclude Pixels: ")
@@ -851,8 +858,12 @@ class ImageEditorApp:
             return
 
         if self.semi_segmented_mask is None:
-            tk.messagebox.showerror("Error", "No semi-segmented mask available.")
-            return
+            if self.merged_mask is not None:
+                self.semi_segmented_mask = self.colorize_mask(self.merged_mask)
+                tk.messagebox.showinfo("Info", "No semi-segmented mask found. Using existing mask instead.")
+            else:
+                tk.messagebox.showerror("Error", "No semi-segmented mask available.")
+                return
 
         selected_category = self.category_variable.get()
         if not selected_category:
