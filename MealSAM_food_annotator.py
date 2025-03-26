@@ -924,7 +924,6 @@ class ImageEditorApp:
             elif 'Portion' in entry:
                 display_text += f"{entry['Portion']} portions\n"
             elif 'Carbohydrates' in entry:
-                print("avail")
                 display_text += f"{entry['Carbohydrates']} grams CHO\n"
             else:
                 display_text += "No weight/volume specified\n"
