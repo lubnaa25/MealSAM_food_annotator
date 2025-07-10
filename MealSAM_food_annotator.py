@@ -30,7 +30,7 @@ import numpy as np
 import torch
 import json
 from segment_anything import SamAutomaticMaskGenerator, SamPredictor
-from util import build_sam_vit_b, build_sam_vit_h, build_sam_vit_l
+from util import build_sam_vit_b
 import matplotlib.pyplot as plt
 
 
@@ -43,11 +43,7 @@ def update_sam_model(model_type, sam_checkpoint):
 
 
 sam_model_registry = {
-    "default": build_sam_vit_h,
     "MealSAM": build_sam_vit_b,
-    "vit_h": build_sam_vit_h,
-    "vit_l": build_sam_vit_l,
-    "vit_b": build_sam_vit_b,
 }
 
 
@@ -483,24 +479,12 @@ class ImageEditorApp:
     def determine_checkpoint_path(self, model_type):
         if model_type == "MealSAM":
             return "./weights/MealSAM.pth"
-        elif model_type == "vit_b":
-            return "./weights/sam_vit_b_01ec64.pth"
-        elif model_type == "vit_l":
-            return "./weights/sam_vit_l_0b3195.pth"
-        elif model_type == "vit_h":
-            return "./weights/sam_vit_h_4b8939.pth"
 
     def update_model_selection(self, event=None):
         self.model_type = self.model_variable.get()
         if self.model_type == "MealSAM":
             self.model_type = "vit_b"
             self.sam_checkpoint = "./weights/MealSAM.pth"
-        elif self.model_type == "vit_b":
-            self.sam_checkpoint = "./weights/sam_vit_b_01ec64.pth"
-        elif self.model_type == "vit_l":
-            self.sam_checkpoint = "./weights/sam_vit_l_0b3195.pth"
-        elif self.model_type == "vit_h":
-            self.sam_checkpoint = "./weights/sam_vit_h_4b8939.pth"
 
         # Initialize SAM model with current selection
         sam = sam_model_registry[self.model_type](checkpoint=self.sam_checkpoint)
