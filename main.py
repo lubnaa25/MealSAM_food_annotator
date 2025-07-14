@@ -81,38 +81,110 @@ class ScrolledListbox(tk.Toplevel):
             self.destroy()
 
 
-class AutocompleteCombobox(ttk.Combobox):
+class ScrolledListbox(tk.Toplevel):
+    def __init__(self, parent, options, var, close_callback=None, **kwargs):
+        super().__init__(parent)
+        self.var = var
+        self.close_callback = close_callback
+ 
+        self.listbox = tk.Listbox(self, **kwargs)
+        self.listbox.config(height=10, width=60)  # Add this line
+        self.listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.scrollbar = tk.Scrollbar(self, orient=tk.VERTICAL, command=self.listbox.yview)
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.listbox.config(yscrollcommand=self.scrollbar.set)
+ 
+        for option in options:
+            self.listbox.insert(tk.END, option)
+            
+        self.listbox.selection_set(0)  # Preselect the first item
+        self.listbox.activate(0)   
+        self.listbox.bind("<ButtonRelease-1>", self.selected)
+        self.listbox.bind("<Return>", self.selected)
+        self.bind("<FocusOut>", self.on_focus_out)
+        def selected(self, event):
+            selection = self.listbox.curselection()
+            if selection:
+                index = selection[0]
+                value = self.listbox.get(index)
+                self.var.set(value)
+            self.destroy()
+ 
+ 
+    def selected(self, event):
+        selection = self.listbox.curselection()
+        if selection:
+            index = selection[0]
+            value = self.listbox.get(index)
+            self.var.set(value)
+            if self.close_callback:
+                self.close_callback()
+ 
+    def on_focus_out(self, event):
+        if self.close_callback:
+            self.close_callback()
+    # def on_focus_out(self, event):
+    #     self.destroy()
+ 
+ 
+class AutocompleteCombobox(ttk.Entry):
     def __init__(self, parent, categories, app_instance, **kwargs):
         super().__init__(parent, **kwargs)
+        self.config(width=60)  # Increase number of characters visible
         self.app_instance = app_instance
         self.categories = categories
-        self["values"] = categories
+        self.dropdown = None
+        self.var = self["textvariable"] = kwargs.get("textvariable", tk.StringVar())
+        self.var.trace_add("write", self.update_suggestions)
+ 
         self.bind("<KeyRelease>", self.on_keyrelease)
-        longest_category = max(categories, key=len)
-        self.config(width=len(longest_category) + 3)
-
+        self.bind("<Down>", self.show_dropdown)
+        self.bind("<Return>", self.check_add_new_category)
+ 
     def on_keyrelease(self, event):
-        if event.keysym in ["Up", "Down", "Left", "Right", "Return", "Tab", "Escape"]:
-            if event.keysym == "Return" and self.get() == "Add new category...":
-                self.app_instance.add_new_category()
-            return
-
         if event.keysym == "Escape":
-            self.event_generate("<Escape>")
+            self.close_dropdown()
             return
-
-        value = event.widget.get().strip()
+ 
+    def show_dropdown(self, event=None):
+        value = self.var.get().strip()
         if value:
-            filtered_data = [item for item in self.categories if value.lower() in item.lower()]
-            if "Add new category..." not in filtered_data:
-                filtered_data.append("Add new category...")
-            self["values"] = filtered_data
+            matches = [c for c in self.categories if value.lower() in c.lower()]
+            if "Add new category..." not in matches:
+                matches.append("Add new category...")
         else:
-            self["values"] = self.categories + ["Add new category..."]
-
-        self.event_generate("<Down>")
-        self.focus()
-        self.icursor(tk.END)
+            matches = self.categories + ["Add new category..."]
+ 
+        if matches:
+            self.close_dropdown()
+            x = self.winfo_rootx()
+            y = self.winfo_rooty() + self.winfo_height()
+            # self.dropdown = ScrolledListbox(self.winfo_toplevel(), matches, self.var)
+            self.dropdown = ScrolledListbox(self.winfo_toplevel(), matches, self.var, close_callback=self.close_dropdown)
+            self.dropdown.geometry(f"+{x}+{y}")
+            self.dropdown.deiconify()
+ 
+    def update_suggestions(self, *args):
+        self.show_dropdown()
+ 
+    def close_dropdown(self):
+        if self.dropdown:
+            self.dropdown.destroy()
+            self.dropdown = None
+ 
+    def check_add_new_category(self, event=None):
+        if self.dropdown:
+            # Get selected item from the listbox
+            selection = self.dropdown.listbox.curselection()
+            if selection:
+                index = selection[0]
+                value = self.dropdown.listbox.get(index)
+                self.var.set(value)
+            self.close_dropdown()
+    
+        elif self.var.get() == "Add new category...":
+            self.app_instance.add_new_category()
+            self.close_dropdown()
 
 
 class ImageEditorApp:
