@@ -138,9 +138,11 @@ class AutocompleteCombobox(ttk.Entry):
         self.var.trace_add("write", self.update_suggestions)
  
         self.bind("<KeyRelease>", self.on_keyrelease)
-        self.bind("<Down>", self.show_dropdown)
+        # self.bind("<Down>", self.show_dropdown)
         self.bind("<Return>", self.check_add_new_category)
- 
+        self.bind("<Down>", self.move_selection_down)
+        self.bind("<Up>", self.move_selection_up)
+        
     def on_keyrelease(self, event):
         if event.keysym == "Escape":
             self.close_dropdown()
@@ -185,6 +187,31 @@ class AutocompleteCombobox(ttk.Entry):
         elif self.var.get() == "Add new category...":
             self.app_instance.add_new_category()
             self.close_dropdown()
+ 
+    def move_selection_down(self, event=None):
+        if self.dropdown and self.dropdown.listbox.size() > 0:
+            current = self.dropdown.listbox.curselection()
+            if current:
+                index = current[0]
+                if index < self.dropdown.listbox.size() - 1:
+                    self.dropdown.listbox.selection_clear(0, tk.END)
+                    self.dropdown.listbox.selection_set(index + 1)
+                    self.dropdown.listbox.activate(index + 1)
+            else:
+                self.dropdown.listbox.selection_set(0)
+                self.dropdown.listbox.activate(0)
+        else:
+            self.show_dropdown()
+ 
+    def move_selection_up(self, event=None):
+        if self.dropdown and self.dropdown.listbox.size() > 0:
+            current = self.dropdown.listbox.curselection()
+            if current:
+                index = current[0]
+                if index > 0:
+                    self.dropdown.listbox.selection_clear(0, tk.END)
+                    self.dropdown.listbox.selection_set(index - 1)
+                    self.dropdown.listbox.activate(index - 1)
 
 
 class ImageEditorApp:
