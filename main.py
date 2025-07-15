@@ -23,7 +23,7 @@ limitations under the License.
 import os
 import tkinter as tk
 from tkinter import ttk
-from tkinter import filedialog, Menu, Canvas, Radiobutton, IntVar, Scale, HORIZONTAL, StringVar, OptionMenu
+from tkinter import filedialog, Menu, Radiobutton, IntVar, Scale, HORIZONTAL, StringVar, OptionMenu
 from PIL import Image, ImageTk, ImageDraw
 import cv2
 import numpy as np
@@ -31,9 +31,6 @@ import torch
 import json
 from segment_anything import SamAutomaticMaskGenerator, SamPredictor
 from util import build_sam_vit_b
-import matplotlib.pyplot as plt
-
-
 
 
 def resource_path(relative_path):
@@ -42,7 +39,6 @@ def resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, relative_path)
     return os.path.join(os.path.abspath("."), relative_path)
-
 
 
 def update_sam_model(model_type, sam_checkpoint):
@@ -60,73 +56,50 @@ sam_model_registry = {
 
 
 class ScrolledListbox(tk.Toplevel):
-    def __init__(self, parent, options, var, **kwargs):
+    def __init__(self, parent, options, var, icon=None, close_callback=None, select_callback=None, **kwargs):
         super().__init__(parent)
-        self.var = var
-        self.listbox = tk.Listbox(self, **kwargs)
-        self.listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self.scrollbar = tk.Scrollbar(self, orient=tk.VERTICAL, command=self.listbox.yview)
-        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.listbox.config(yscrollcommand=self.scrollbar.set)
-        for option in options:
-            self.listbox.insert(tk.END, option)
-        self.listbox.bind("<<ListboxSelect>>", self.selected)
 
-    def selected(self, event):
-        selection = event.widget.curselection()
-        if selection:
-            index = selection[0]
-            value = event.widget.get(index)
-            self.var.set(value)
-            self.destroy()
-
-
-class ScrolledListbox(tk.Toplevel):
-    def __init__(self, parent, options, var, close_callback=None, **kwargs):
-        super().__init__(parent)
+        self.overrideredirect(True)
+        self.transient(parent)
         self.var = var
         self.close_callback = close_callback
- 
+        self.select_callback = select_callback
+        if icon:
+            self.iconphoto(False, icon)
+
         self.listbox = tk.Listbox(self, **kwargs)
         self.listbox.config(height=10, width=60)  # Add this line
         self.listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
         self.scrollbar = tk.Scrollbar(self, orient=tk.VERTICAL, command=self.listbox.yview)
         self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.listbox.config(yscrollcommand=self.scrollbar.set)
- 
+
         for option in options:
             self.listbox.insert(tk.END, option)
-            
+
         self.listbox.selection_set(0)  # Preselect the first item
-        self.listbox.activate(0)   
+        self.listbox.activate(0)
+
         self.listbox.bind("<ButtonRelease-1>", self.selected)
         self.listbox.bind("<Return>", self.selected)
-        self.bind("<FocusOut>", self.on_focus_out)
-        def selected(self, event):
-            selection = self.listbox.curselection()
-            if selection:
-                index = selection[0]
-                value = self.listbox.get(index)
-                self.var.set(value)
-            self.destroy()
- 
- 
+
     def selected(self, event):
         selection = self.listbox.curselection()
         if selection:
             index = selection[0]
             value = self.listbox.get(index)
             self.var.set(value)
+            if self.select_callback:
+                self.select_callback()
             if self.close_callback:
                 self.close_callback()
- 
+
     def on_focus_out(self, event):
         if self.close_callback:
             self.close_callback()
-    # def on_focus_out(self, event):
-    #     self.destroy()
- 
- 
+
+
 class AutocompleteCombobox(ttk.Entry):
     def __init__(self, parent, categories, app_instance, **kwargs):
         super().__init__(parent, **kwargs)
@@ -136,18 +109,18 @@ class AutocompleteCombobox(ttk.Entry):
         self.dropdown = None
         self.var = self["textvariable"] = kwargs.get("textvariable", tk.StringVar())
         self.var.trace_add("write", self.update_suggestions)
- 
+
         self.bind("<KeyRelease>", self.on_keyrelease)
         # self.bind("<Down>", self.show_dropdown)
         self.bind("<Return>", self.check_add_new_category)
         self.bind("<Down>", self.move_selection_down)
         self.bind("<Up>", self.move_selection_up)
-        
+
     def on_keyrelease(self, event):
         if event.keysym == "Escape":
             self.close_dropdown()
             return
- 
+
     def show_dropdown(self, event=None):
         value = self.var.get().strip()
         if value:
@@ -156,24 +129,28 @@ class AutocompleteCombobox(ttk.Entry):
                 matches.append("Add new category...")
         else:
             matches = self.categories + ["Add new category..."]
- 
+
         if matches:
             self.close_dropdown()
             x = self.winfo_rootx()
             y = self.winfo_rooty() + self.winfo_height()
-            # self.dropdown = ScrolledListbox(self.winfo_toplevel(), matches, self.var)
-            self.dropdown = ScrolledListbox(self.winfo_toplevel(), matches, self.var, close_callback=self.close_dropdown)
+            self.dropdown = ScrolledListbox(self.winfo_toplevel(),
+                                            matches,
+                                            self.var,
+                                            icon=self.app_instance.icon_image,
+                                            close_callback=self.close_dropdown,
+                                            select_callback=self.on_select_from_list)
             self.dropdown.geometry(f"+{x}+{y}")
             self.dropdown.deiconify()
- 
+
     def update_suggestions(self, *args):
         self.show_dropdown()
- 
+
     def close_dropdown(self):
         if self.dropdown:
             self.dropdown.destroy()
             self.dropdown = None
- 
+
     def check_add_new_category(self, event=None):
         if self.dropdown:
             # Get selected item from the listbox
@@ -183,11 +160,11 @@ class AutocompleteCombobox(ttk.Entry):
                 value = self.dropdown.listbox.get(index)
                 self.var.set(value)
             self.close_dropdown()
-    
+
         elif self.var.get() == "Add new category...":
             self.app_instance.add_new_category()
             self.close_dropdown()
- 
+
     def move_selection_down(self, event=None):
         if self.dropdown and self.dropdown.listbox.size() > 0:
             current = self.dropdown.listbox.curselection()
@@ -202,7 +179,7 @@ class AutocompleteCombobox(ttk.Entry):
                 self.dropdown.listbox.activate(0)
         else:
             self.show_dropdown()
- 
+
     def move_selection_up(self, event=None):
         if self.dropdown and self.dropdown.listbox.size() > 0:
             current = self.dropdown.listbox.curselection()
@@ -212,6 +189,11 @@ class AutocompleteCombobox(ttk.Entry):
                     self.dropdown.listbox.selection_clear(0, tk.END)
                     self.dropdown.listbox.selection_set(index - 1)
                     self.dropdown.listbox.activate(index - 1)
+
+    def on_select_from_list(self):
+        # Restore focus to Quantity field
+        if hasattr(self.app_instance, "grams_entry"):
+            self.app_instance.grams_entry.focus_set()
 
 
 class ImageEditorApp:
@@ -230,6 +212,7 @@ class ImageEditorApp:
         self.root.title("Food Annotator")
         icon_path = resource_path("tool_resources/appicon.png")
         icon = ImageTk.PhotoImage(file=icon_path)
+        self.icon_image = icon
         self.root.iconphoto(False, icon)
 
         menubar = Menu(self.root)
@@ -245,10 +228,9 @@ class ImageEditorApp:
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=root.quit)
 
-
-        up_img_path=resource_path("tool_resources/upload.png")
+        up_img_path = resource_path("tool_resources/upload.png")
         upload_image_icon = ImageTk.PhotoImage(Image.open(up_img_path).resize((20, 20)))
-        sv_img_path=resource_path("tool_resources/save.png")
+        sv_img_path = resource_path("tool_resources/save.png")
         save_image_icon = ImageTk.PhotoImage(Image.open(sv_img_path).resize((20, 20)))
 
         # Buttons
@@ -337,10 +319,10 @@ class ImageEditorApp:
         self.annotation_type_label.pack(side="left", padx=5)
         self.annotation_type_menu.pack(side="left", padx=5)
 
-        self.grams_label = tk.Label(button_frame, text="Quantity:")
+        self.grams_label = tk.Label(button_frame, text="Quantity:",  state="disabled")
         self.grams_label.pack(side="left", padx=10)
 
-        self.grams_entry = tk.Entry(button_frame)
+        self.grams_entry = tk.Entry(button_frame,  state="disabled")
         self.grams_entry.pack(side="left", padx=10)
 
         self.yes_radio_button = tk.Radiobutton(button_frame, text="Yes", variable=self.annotation_option, value="Yes", command=self.toggle_annotation_fields)
@@ -630,6 +612,8 @@ class ImageEditorApp:
             self.annotation_type_menu.config(state="readonly")
             self.grams_label.config(state="normal")
             self.grams_entry.config(state="normal")
+            self.annotation_type.set("Weight")
+            self.grams_entry.focus_set()
         else:
             # disable
             self.annotation_type_label.config(state="disabled")
@@ -756,7 +740,7 @@ class ImageEditorApp:
                             nutrient_file.write(f"{entry['Category']}: {weight} grams\n")
                         elif volume:
                             nutrient_file.write(f"{entry['Category']}: {volume} ml\n")
-                        if portions:
+                        elif portions:
                             nutrient_file.write(f"{entry['Category']}: {portions} portions\n")
                         elif carbohydrates:
                             nutrient_file.write(f"{entry['Category']}: {carbohydrates} grams CHO\n")
@@ -794,6 +778,7 @@ class ImageEditorApp:
         self.overlaid_mask_canvas.delete("all")
         self.mask_canvas.delete("all")
         self.category_variable.set("")
+        self.category_dropdown.close_dropdown()
         self.validate_mask = None
         self.validated_mask = None
 
@@ -1022,6 +1007,29 @@ class ImageEditorApp:
         self.display_colored_validated_mask2(validated_mask, self.color_map)
 
         self.update_nutrient_data_display()
+
+        self.clear_points()
+        self.include_pixels = []
+        self.exclude_pixels = []
+        self.include_click_count = 0
+        self.exclude_click_count = 0
+        self.canvas.delete("highlighted_pixel")
+        self.reset_annotation_fields()
+
+    def reset_annotation_fields(self):
+        # Reset the "Others?" radio button and related UI
+        self.annotation_option.set("No")
+        self.toggle_annotation_fields()  # This disables the type menu and label
+
+        # Reset the annotation type to default
+        self.annotation_type.set("Weight")
+
+        # Clear the quantity input
+        self.grams_entry.delete(0, tk.END)
+
+        # Reset the category dropdown
+        self.category_variable.set("")  # or set to a default
+        self.category_dropdown.close_dropdown()
 
     def update_nutrient_data_display(self):
         display_text = "Nutrient Data:\n"
