@@ -56,9 +56,10 @@ sam_model_registry = {
 
 
 class ScrolledListbox(tk.Toplevel):
-    def __init__(self, parent, options, var, icon=None, close_callback=None, select_callback=None, **kwargs):
+    def __init__(self, parent, options, var, icon=None, close_callback=None, select_callback=None, previous_focus=None, **kwargs):
         super().__init__(parent)
-
+        self.bind("<FocusOut>", self.on_focus_out)
+        self.previous_focus = previous_focus
         self.overrideredirect(True)
         self.transient(parent)
         self.var = var
@@ -139,15 +140,22 @@ class AutocompleteCombobox(ttk.Entry):
                                             self.var,
                                             icon=self.app_instance.icon_image,
                                             close_callback=self.close_dropdown,
-                                            select_callback=self.on_select_from_list)
+                                            select_callback=self.on_select_from_list,
+                                            previous_focus=self.previous_focus)
             self.dropdown.geometry(f"+{x}+{y}")
             self.dropdown.deiconify()
 
     def update_suggestions(self, *args):
+        if not self.dropdown:
+            self.previous_focus = self.focus_get()
         self.show_dropdown()
 
     def close_dropdown(self):
         if self.dropdown:
+            try:
+                self.dropdown.grab_release()
+            except tk.TclError:
+                pass
             self.dropdown.destroy()
             self.dropdown = None
 
@@ -191,9 +199,19 @@ class AutocompleteCombobox(ttk.Entry):
                     self.dropdown.listbox.activate(index - 1)
 
     def on_select_from_list(self):
-        # Restore focus to Quantity field
-        if hasattr(self.app_instance, "grams_entry"):
-            self.app_instance.grams_entry.focus_set()
+        self.winfo_toplevel().focus_force()
+
+        def restore_focus():
+            try:
+                self.previous_focus.focus_set()
+                self.previous_focus.event_generate("<FocusIn>")
+                self.previous_focus.update()  # Force widget update
+                self.previous_focus.lift()    # Bring it to the front
+            except tk.TclError:
+                pass
+
+        # Let the dropdown destroy first, then restore focus
+        self.after(10, restore_focus)
 
 
 class ImageEditorApp:
@@ -319,10 +337,10 @@ class ImageEditorApp:
         self.annotation_type_label.pack(side="left", padx=5)
         self.annotation_type_menu.pack(side="left", padx=5)
 
-        self.grams_label = tk.Label(button_frame, text="Quantity:",  state="disabled")
+        self.grams_label = tk.Label(button_frame, text="Quantity:", state="disabled")
         self.grams_label.pack(side="left", padx=10)
 
-        self.grams_entry = tk.Entry(button_frame,  state="disabled")
+        self.grams_entry = tk.Entry(button_frame, state="disabled")
         self.grams_entry.pack(side="left", padx=10)
 
         self.yes_radio_button = tk.Radiobutton(button_frame, text="Yes", variable=self.annotation_option, value="Yes", command=self.toggle_annotation_fields)
@@ -367,12 +385,6 @@ class ImageEditorApp:
         # Clears all the canvas items except the RGB image
         self.clear_all_button = tk.Button(button_frame, text="Clear All", command=self.clear_canvas_all)
         self.clear_all_button.pack(side="left", padx=5)
-
-        # # Will produce the automatic segmentation mask from SAM
-        # self.segment_button = tk.Button(button_frame, text="Segment", command=self.segment_image)
-        # self.segment_button.pack(side="left", padx=5)
-
-        # Displaying of images and masks
 
         # RGB Image
         self.canvas_frame = tk.Frame(self.root)
@@ -606,6 +618,7 @@ class ImageEditorApp:
             tk.messagebox.showerror("Error", f"Failed to update categories: {e}")
 
     def toggle_annotation_fields(self):
+        self.grams_entry.delete(0, tk.END)
         if self.annotation_option.get() == "Yes":
             #  annotation type selection (weight/volume)
             self.annotation_type_label.config(state="normal")
@@ -782,49 +795,6 @@ class ImageEditorApp:
         self.validate_mask = None
         self.validated_mask = None
 
-    def segment_image(self):
-        if not self.image_uploaded:
-            tk.messagebox.showerror("Error", "Please upload an image first.")
-            return
-
-        original_image_array = np.array(self.image.convert("RGB"))
-        image_array = np.asarray(self.image)
-        image_array = cv2.cvtColor(image_array, cv2.COLOR_BGR2RGB)
-        masks = self.mask_generator.generate(image_array)
-        num_masks = len(masks)
-        merged_mask = np.zeros_like(masks[0]["segmentation"], dtype=int)
-        self.colors = []  # Reset colors
-        for i in range(num_masks):
-            mask_value = i + 1
-            merged_mask[masks[i]["segmentation"]] = mask_value
-            random_color = np.random.randint(0, 256, size=3).tolist()
-            self.colors.append(random_color)
-
-        self.merged_mask = merged_mask
-        self.max_label = np.max(self.merged_mask)
-
-        color_mask = self.colorize_mask(self.merged_mask)
-
-        alpha = 0.5
-        mask_indices = np.any(color_mask != [0, 0, 0], axis=-1)
-        overlay_image_array = original_image_array.copy()
-        overlay_image_array[mask_indices] = (alpha * color_mask[mask_indices] + (1 - alpha) * original_image_array[mask_indices]).astype("uint8")
-
-        overlaid_image_array = original_image_array.copy()
-        overlaid_image_array[mask_indices] = (alpha * color_mask[mask_indices] + (1 - alpha) * original_image_array[mask_indices]).astype("uint8")
-        overlaid_image = Image.fromarray(overlaid_image_array)
-        overlaid_photo_image = ImageTk.PhotoImage(overlaid_image)
-
-        self.overlaid_mask_canvas.delete("all")
-        self.overlaid_mask_canvas.create_image(0, 0, anchor="nw", image=overlaid_photo_image)
-        self.overlaid_mask_canvas.image = overlaid_photo_image
-
-        new_mask_photo_image = ImageTk.PhotoImage(Image.fromarray(color_mask))
-        self.mask_canvas.delete("all")
-        self.mask_image_on_canvas = self.mask_canvas.create_image(
-            0, 0, anchor="nw", image=new_mask_photo_image)
-        self.mask_canvas.image = new_mask_photo_image
-
     # Unique color for each single category
     def create_color_map(self):
         num_categories = len(self.categories)
@@ -875,7 +845,7 @@ class ImageEditorApp:
         self.colors = []  # Reset colors
         for i in range(num_masks):
             mask_value = i + 1
-            merged_mask[masks[i] == True] = mask_value
+            merged_mask[masks[i]] = mask_value
             random_color = np.random.randint(0, 256, size=3).tolist()
             self.colors.append(random_color)
 
@@ -968,8 +938,11 @@ class ImageEditorApp:
                 tk.messagebox.showerror("Error", f"Invalid input for {annotation_type.lower()}. Please enter a valid number.")
                 return
 
-        existing_entry = next((entry for entry in self.all_nutrient_data
-                               if entry['Include Pixels'] == self.include_pixels and entry['Exclude Pixels'] == self.exclude_pixels), None)
+        if self.include_pixels and self.exclude_pixels:
+            existing_entry = next((entry for entry in self.all_nutrient_data
+                                   if entry['Include Pixels'] == self.include_pixels and entry['Exclude Pixels'] == self.exclude_pixels), None)
+        else:
+            existing_entry = None
 
         if existing_entry:
             existing_entry['Category'] = selected_category
@@ -1009,12 +982,15 @@ class ImageEditorApp:
         self.update_nutrient_data_display()
 
         self.clear_points()
-        self.include_pixels = []
-        self.exclude_pixels = []
-        self.include_click_count = 0
-        self.exclude_click_count = 0
-        self.canvas.delete("highlighted_pixel")
         self.reset_annotation_fields()
+        # self.create_mask()
+        self.mask_canvas.delete("all")
+        self.merged_mask = np.zeros((self.image.height, self.image.width), dtype=np.int32)
+        self.create_mask()
+        self.overlaid_mask_canvas.create_image(0, 0, anchor="nw", image=self.photo_image)
+        self.overlaid_mask_canvas.image = self.photo_image
+
+        # self.reset_canvas()
 
     def reset_annotation_fields(self):
         # Reset the "Others?" radio button and related UI
