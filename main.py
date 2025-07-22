@@ -358,9 +358,9 @@ class ImageEditorApp:
         self.overlaid_mask_canvas = None
         self.overlaid_validated_mask_canvas = None
         self.include_pixels = []
-        self.exclude_pixels = []
+      #  self.exclude_pixels = []
         self.include_click_count = 0
-        self.exclude_click_count = 0
+       # self.exclude_click_count = 0
         self.image_directory = ""
         self.display_label = []
         self.segment_data = {}
@@ -376,8 +376,8 @@ class ImageEditorApp:
 
         self.include_label = tk.Label(self.root, text="Include Pixels: ")
         self.include_label.pack(side="bottom")
-        self.exclude_label = tk.Label(self.root, text="Exclude Pixels: ")
-        self.exclude_label.pack(side="bottom")
+        # self.exclude_label = tk.Label(self.root, text="Exclude Pixels: ")
+        # self.exclude_label.pack(side="bottom")
 
         self.display_label = tk.Label(self.root, text="Category and weight: ")
         self.display_label.pack(side="bottom")
@@ -573,7 +573,7 @@ class ImageEditorApp:
             self.brush_size_slider.config(state=tk.DISABLED)
             self.semi_segment_button.config(state=tk.NORMAL)
             self.canvas.bind("<Button-1>", self.include_left_click)
-            self.canvas.bind("<Button-3>", self.exclude_right_click)
+        #    self.canvas.bind("<Button-3>", self.exclude_right_click)
 
             self.overlaid_mask_canvas.unbind("<Motion>")
             self.overlaid_mask_canvas.unbind("<Leave>")
@@ -655,15 +655,15 @@ class ImageEditorApp:
     # Logic for Upload button
     def upload_image(self):
         self.include_pixels = []
-        self.exclude_pixels = []
+     #   self.exclude_pixels = []
         self.all_nutrient_data = []
         self.update_nutrient_data_display()
 
         self.include_click_count = 0
-        self.exclude_click_count = 0
+       # self.exclude_click_count = 0
 
         self.include_label.config(text="Include Pixels (x,y): ")  # Include pixels are assigned a label of 1 - i.e. Foreground -- appear blue
-        self.exclude_label.config(text="Exclude Pixels (x,y): ")  # Exclude pixels are assigned a label of 0 - i.e. Background -- appear pink
+        #self.exclude_label.config(text="Exclude Pixels (x,y): ")  # Exclude pixels are assigned a label of 0 - i.e. Background -- appear pink
 
         if hasattr(self, "validated_mask"):
             del self.validated_mask
@@ -713,7 +713,7 @@ class ImageEditorApp:
         self.canvas.image = self.photo_image
 
         self.canvas.bind("<Button-1>", self.include_left_click)
-        self.canvas.bind("<Button-3>", self.exclude_right_click)
+       # self.canvas.bind("<Button-3>", self.exclude_right_click)
 
         self.image_on_canvas = self.canvas.create_image(
             0, 0, anchor="nw", image=self.photo_image)
@@ -721,7 +721,7 @@ class ImageEditorApp:
         self.canvas.image = self.photo_image
 
         self.canvas.bind("<Button-1>", self.include_left_click)
-        self.canvas.bind("<Button-3>", self.exclude_right_click)
+      #  self.canvas.bind("<Button-3>", self.exclude_right_click)
 
         self.overlaid_mask_canvas.create_image(0, 0, anchor="nw", image=self.photo_image)
         self.overlaid_mask_canvas.image = self.photo_image
@@ -778,9 +778,9 @@ class ImageEditorApp:
     # Used by clear all button
     def clear_canvas_all(self):
         self.include_pixels = []
-        self.exclude_pixels = []
+     #   self.exclude_pixels = []
         self.include_click_count = 0
-        self.exclude_click_count = 0
+      #  self.exclude_click_count = 0
         self.update_labels()
         self.action_history = []
         self.all_nutrient_data = []
@@ -814,16 +814,16 @@ class ImageEditorApp:
             tk.messagebox.showerror("Error", "Semi Segment needs include points")
             return
 
-        if self.exclude_pixels:
-            include_coords = np.asarray(self.include_pixels)
-            exclude_coords = np.asarray(self.exclude_pixels)
-            include_labels = np.array([1] * len(self.include_pixels))  # Include is foreground
-            exclude_labels = np.array([0] * len(self.exclude_pixels))  # Exclude is background
-            inputarray = np.concatenate((include_coords, exclude_coords))
-            input_label = np.concatenate((include_labels, exclude_labels))
-        else:
-            inputarray = np.asarray(self.include_pixels)
-            input_label = np.array([1] * len(self.include_pixels))
+        # if self.exclude_pixels:
+        #     include_coords = np.asarray(self.include_pixels)
+        #     exclude_coords = np.asarray(self.exclude_pixels)
+        #     include_labels = np.array([1] * len(self.include_pixels))  # Include is foreground
+        #     exclude_labels = np.array([0] * len(self.exclude_pixels))  # Exclude is background
+        #     inputarray = np.concatenate((include_coords, exclude_coords))
+        #     input_label = np.concatenate((include_labels, exclude_labels))
+        # else:
+        inputarray = np.asarray(self.include_pixels)
+        input_label = np.array([1] * len(self.include_pixels))
 
         # Call model - multimasks not to be generated
         sam = sam_model_registry[self.model_type](checkpoint=self.sam_checkpoint)
@@ -938,9 +938,9 @@ class ImageEditorApp:
                 tk.messagebox.showerror("Error", f"Invalid input for {annotation_type.lower()}. Please enter a valid number.")
                 return
 
-        if self.include_pixels and self.exclude_pixels:
+        if self.include_pixels: #and self.exclude_pixels:
             existing_entry = next((entry for entry in self.all_nutrient_data
-                                   if entry['Include Pixels'] == self.include_pixels and entry['Exclude Pixels'] == self.exclude_pixels), None)
+                                   if entry['Include Pixels'] == self.include_pixels), None)
         else:
             existing_entry = None
 
@@ -952,7 +952,7 @@ class ImageEditorApp:
             new_entry = {
                 "Category": selected_category,
                 "Include Pixels": self.include_pixels.copy(),
-                "Exclude Pixels": self.exclude_pixels.copy(),
+               # "Exclude Pixels": self.exclude_pixels.copy(),
             }
             if annotation_data is not None:
                 new_entry[annotation_type] = annotation_data
@@ -1047,15 +1047,15 @@ class ImageEditorApp:
                 self.include_click_count += 1
                 self.action_history.append("include")
 
-    def exclude_right_click(self, event):
-        if self.exclude_click_count < 20:
-            x, y = event.x, event.y
-            if self.is_within_image_bounds(x, y):
-                self.exclude_pixels.append((x, y))
-                self.highlight_pixels(x, y, "#F792C4", 5)
-                self.update_labels()
-                self.exclude_click_count += 1
-                self.action_history.append("exclude")
+    # def exclude_right_click(self, event):
+    #     if self.exclude_click_count < 20:
+    #         x, y = event.x, event.y
+    #         if self.is_within_image_bounds(x, y):
+    #             self.exclude_pixels.append((x, y))
+    #             self.highlight_pixels(x, y, "#F792C4", 5)
+    #             self.update_labels()
+    #             self.exclude_click_count += 1
+    #             self.action_history.append("exclude")
 
     def highlight_pixels(self, x, y, color, radius):
         if self.is_within_image_bounds(x, y):
@@ -1064,13 +1064,13 @@ class ImageEditorApp:
             end_x = x + radius
             end_y = y + radius
             self.canvas.create_oval(start_x, start_y, end_x, end_y,
-                                    outline=color, fill=color, tags=("highlighted_pixel", f"pixel{len(self.include_pixels) + len(self.exclude_pixels)}"))
+                                    outline=color, fill=color, tags=("highlighted_pixel", f"pixel{len(self.include_pixels)}"))
 
     def clear_points(self):
         self.include_pixels = []
-        self.exclude_pixels = []
+       # self.exclude_pixels = []
         self.include_click_count = 0
-        self.exclude_click_count = 0
+       # self.exclude_click_count = 0
         self.update_labels()
         self.canvas.delete("highlighted_pixel")
 
@@ -1082,11 +1082,11 @@ class ImageEditorApp:
                 self.include_click_count -= 1
 
                 self.canvas.delete(f"pixel{len(self.include_pixels) + len(self.exclude_pixels) + 1}")
-            elif last_action == "exclude" and self.exclude_pixels:
-                self.exclude_pixels.pop()
-                self.exclude_click_count -= 1
+            # elif last_action == "exclude" and self.exclude_pixels:
+            #     self.exclude_pixels.pop()
+            #     self.exclude_click_count -= 1
 
-                self.canvas.delete(f"pixel{len(self.include_pixels) + len(self.exclude_pixels) + 1}")
+            #     self.canvas.delete(f"pixel{len(self.include_pixels) + len(self.exclude_pixels) + 1}")
             self.update_labels()
 
     def clear_canvas(self, canvas_item):
@@ -1098,7 +1098,7 @@ class ImageEditorApp:
 
     def update_labels(self):
         self.include_label.config(text=f"Include Pixels: {self.include_pixels}")
-        self.exclude_label.config(text=f"Exclude Pixels: {self.exclude_pixels}")
+      #  self.exclude_label.config(text=f"Exclude Pixels: {self.exclude_pixels}")
 
 
 if __name__ == "__main__":
