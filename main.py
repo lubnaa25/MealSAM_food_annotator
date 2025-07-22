@@ -1038,7 +1038,7 @@ class ImageEditorApp:
         return 0 <= x < self.image.width and 0 <= y < self.image.height
 
     def include_left_click(self, event):
-        if self.include_click_count < 10:
+        if self.include_click_count < 20:
             x, y = event.x, event.y
             if self.is_within_image_bounds(x, y):
                 self.include_pixels.append((x, y))
@@ -1048,7 +1048,7 @@ class ImageEditorApp:
                 self.action_history.append("include")
 
     def exclude_right_click(self, event):
-        if self.exclude_click_count < 10:
+        if self.exclude_click_count < 20:
             x, y = event.x, event.y
             if self.is_within_image_bounds(x, y):
                 self.exclude_pixels.append((x, y))
