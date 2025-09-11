@@ -1,13 +1,17 @@
+Step 1: Create a main.spec file
 
-##create a main.spec file with
+In the same directory as your main.py, create a file called main.spec with the following content:
+
 # -*- mode: python ; coding: utf-8 -*-
-
 
 a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('weights', 'weights'), ('tool_resources', 'tool_resources')],
+    datas=[
+        ('weights', 'weights'),
+        ('tool_resources', 'tool_resources')
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -16,6 +20,7 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
+
 pyz = PYZ(a.pure)
 
 exe = EXE(
@@ -31,7 +36,7 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,
+    console=False,  # ✅ Set to False to hide the terminal window (GUI-only app)
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
@@ -40,5 +45,37 @@ exe = EXE(
 )
 
 
-##2.
+
+Step 2: Build the App
+
+Run the following command in your activated conda environment from the folder containing main.spec:
+
 pyinstaller main.spec
+
+
+⏳ This will take some time. 
+
+
+
+Step 3: Locate the Output
+
+After the build completes, PyInstaller will create a dist/ folder with:
+
+dist/
+└── main.exe    ← 🎯 This is your standalone application
+
+✅ What to do with main.exe:
+
+You can zip it (main.zip) and send it to others.
+
+Users can simply double-click to run it — no Python or dependencies required.
+
+Make sure weights/ and tool_resources/ were correctly included in the build.
+
+💡 Tips
+
+You do not need to pass --onefile or --noconsole if you're using .spec. These are already configured inside the file (console=False).
+
+If you ever want to re-run with clean build files, run:
+
+pyinstaller --clean main.spec
